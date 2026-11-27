@@ -510,7 +510,7 @@ fn render_wikidot_bibliography_shell(
                     ctx.html()
                         .div()
                         .attr(attr!("class" => "title"))
-                        .contents(title);
+                        .inner(|ctx| ctx.push_escaped_preserving_nul(title));
                 } else {
                     let wrapped = [bibliography_wrap_chain(
                         title_wrappers,

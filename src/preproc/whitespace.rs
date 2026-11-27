@@ -558,6 +558,110 @@ pub fn substitute(text: &mut String) {
     substitute_for_layout(text, false);
 }
 
+fn rewrite_bibliography_first_dash_line(text: &mut String) {
+    if !text.contains("[[bibliography") {
+        return;
+    }
+    let mut output = String::with_capacity(text.len());
+    let mut cursor = 0usize;
+    let mut changed = false;
+    while let Some(relative_open) = text[cursor..].find("[[bibliography") {
+        let open = cursor + relative_open;
+        output.push_str(&text[cursor..open]);
+        let Some(relative_close) = text[open..].find("]]") else {
+            cursor = open;
+            break;
+        };
+        let head_end = open + relative_close + 2;
+        output.push_str(&text[open..head_end]);
+        if text[head_end..].starts_with("\n--\n--") {
+            output.push_str("\n\u{2014} \n");
+            cursor = head_end + 4;
+            changed = true;
+        } else {
+            cursor = head_end;
+        }
+    }
+    output.push_str(&text[cursor..]);
+    if changed {
+        *text = output;
+    }
+}
+
+fn mark_self_removing_first_line_occupancy(text: &mut String) {
+    if !text.contains("{{") {
+        return;
+    }
+    let mut output = String::with_capacity(text.len() + 8);
+    let mut cursor = 0usize;
+    let mut changed = false;
+    for line in text.split_inclusive('\n') {
+        let content = line.strip_suffix('\n').unwrap_or(line);
+        let whitespace_token = matches!(content, "{{ }}" | "{{  }}" | "{{\t}}");
+        if whitespace_token && line.ends_with('\n') && cursor == 0 {
+            output.push_str(content);
+            output.push('\u{001f}');
+            output.push('\n');
+            changed = true;
+        } else {
+            output.push_str(line);
+        }
+        cursor += line.len();
+    }
+    if changed {
+        *text = output;
+    }
+}
+
+fn quote_marker_width(line: &str) -> Option<usize> {
+    let bytes = line.as_bytes();
+    let mut index = 0usize;
+    while bytes.get(index) == Some(&b'>') {
+        index += 1;
+        if bytes.get(index) == Some(&b' ') {
+            index += 1;
+        }
+    }
+    (index > 0).then_some(index)
+}
+
+fn rewrite_truly_empty_first_quote_token(text: &mut String) {
+    if !text.contains("> {{}}") {
+        return;
+    }
+    let lines = text.split_inclusive('\n').collect::<Vec<_>>();
+    let mut output = String::with_capacity(text.len() + 1);
+    let mut changed = false;
+    for (index, line) in lines.iter().enumerate() {
+        let content = line.strip_suffix('\n').unwrap_or(line);
+        let Some(marker_width) = quote_marker_width(content) else {
+            output.push_str(line);
+            continue;
+        };
+        let followed = lines.get(index + 1).is_some_and(|next| {
+            let next_content = next.strip_suffix('\n').unwrap_or(next);
+            quote_marker_width(next_content).is_some_and(|width| {
+                !next_content[width..]
+                    .trim_start_matches([' ', '\t'])
+                    .is_empty()
+            })
+        });
+        if followed && &content[marker_width..] == "{{}}" {
+            output.push_str(&content[..marker_width]);
+            output.push_str("{{ }}");
+            if line.ends_with('\n') {
+                output.push('\n');
+            }
+            changed = true;
+        } else {
+            output.push_str(line);
+        }
+    }
+    if changed {
+        *text = output;
+    }
+}
+
 pub(super) fn substitute_wikidot(text: &mut String) {
     substitute_for_layout(text, true);
 }
@@ -599,6 +703,9 @@ fn substitute_for_layout(text: &mut String, wikidot_compatibility: bool) {
 
     if wikidot_compatibility {
         wikidot_truncate_iframe_url_continuations(text);
+        mark_self_removing_first_line_occupancy(text);
+        rewrite_truly_empty_first_quote_token(text);
+        rewrite_bibliography_first_dash_line(text);
     }
 
     join_continued_lines(text, &mut buffer, wikidot_compatibility);
@@ -638,7 +745,9 @@ fn normalize_wikidot_code_body_bytes(text: &mut String) {
     }
 
     let code_ranges = crate::wikidot_code::active_body_ranges(text);
-    let raw_ranges = wikidot_inline_raw_body_ranges(text);
+    let mut raw_ranges = wikidot_inline_raw_body_ranges(text);
+    raw_ranges.extend(wikidot_rawold_body_ranges(text));
+    raw_ranges.sort_by_key(|range| range.start);
     let html_ranges = wikidot_html_body_ranges(text);
     if code_ranges.is_empty() && raw_ranges.is_empty() && html_ranges.is_empty() {
         return;
@@ -686,11 +795,50 @@ fn normalize_wikidot_code_body_bytes(text: &mut String) {
             // let the later trim eat them (codews:19). Conversion happens in
             // `wikidot_trim_code_body`, after the trim.
             character
-                if (in_code || in_raw) && is_wikidot_discarded_control(character) => {}
+                if (in_code || in_raw)
+                    && character != '\u{001f}'
+                    && is_wikidot_discarded_control(character) => {}
             _ => output.push(character),
         }
     }
     *text = output;
+}
+
+fn wikidot_rawold_body_ranges(source: &str) -> Vec<Range<usize>> {
+    let bytes = source.as_bytes();
+    let mut ranges = Vec::new();
+    let mut cursor = 0usize;
+    while let Some(relative) = source[cursor..].find("``") {
+        let start = cursor + relative;
+        if start > 0 && bytes[start - 1] == b'`' {
+            cursor = start + 1;
+            continue;
+        }
+        let body_start = start + 2;
+        let mut close_cursor = body_start;
+        let mut accepted = None;
+        while let Some(relative_close) = source[close_cursor..].find("``") {
+            let body_end = close_cursor + relative_close;
+            let body = &source[body_start..body_end];
+            if !body.is_empty()
+                && !body
+                    .chars()
+                    .any(|c| matches!(c, '\'' | '\u{2018}' | '\u{2019}'))
+                && !body.ends_with('`')
+            {
+                accepted = Some(body_end);
+                break;
+            }
+            close_cursor = body_end + 1;
+        }
+        if let Some(body_end) = accepted {
+            ranges.push(body_start..body_end);
+            cursor = body_end + 2;
+        } else {
+            cursor = start + 1;
+        }
+    }
+    ranges
 }
 
 fn wikidot_html_body_ranges(source: &str) -> Vec<Range<usize>> {
@@ -1675,6 +1823,28 @@ pub(super) fn filter_characters(text: &mut String, preserve_terminal_marker: boo
     strip_document_leading_whitespace(text, &mut buffer, true);
 }
 
+fn wikidot_continuation_inside_double_at(source: &str, newline: usize) -> bool {
+    let before = &source[..newline];
+    let mut count = 0usize;
+    let mut cursor = 0usize;
+    while let Some(relative) = before[cursor..].find("@@") {
+        count += 1;
+        cursor += relative + 2;
+    }
+    if count % 2 == 0 {
+        return false;
+    }
+    let after = &source[newline + 1..];
+    let Some(close) = after.find("@@") else {
+        return false;
+    };
+    !after[..close].contains(
+        "
+
+",
+    )
+}
+
 fn join_continued_lines(
     text: &mut String,
     buffer: &mut String,
@@ -1756,7 +1926,10 @@ fn join_continued_lines(
                 let removed = buffer.pop();
                 debug_assert_eq!(removed, Some('\\'));
                 buffer.push(' ');
-            } else if in_raw_body || continued_div_opener {
+            } else if in_raw_body
+                || continued_div_opener
+                || (wikidot_compatibility && index + 1 == text.len())
+            {
                 buffer.push(character);
             } else if wikidot_compatibility
                 && buffer.ends_with("\\\\")
@@ -1779,6 +1952,13 @@ fn join_continued_lines(
             } else {
                 let removed = buffer.pop();
                 debug_assert_eq!(removed, Some('\\'));
+                if wikidot_compatibility
+                    && wikidot_continuation_inside_double_at(text, index)
+                {
+                    buffer.push('\u{001f}');
+                } else if wikidot_compatibility && text[index + 1..].starts_with("[!--") {
+                    buffer.push(character);
+                }
             }
         } else {
             if character == '\n'

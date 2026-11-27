@@ -7716,7 +7716,7 @@ fn strip_leading_separators(elements: &mut Vec<Element>) {
         return;
     };
     let stripped = text.trim_start_matches([' ', '\t']);
-    if stripped.len() == text.len() {
+    if stripped.len() == text.len() || text.len() - stripped.len() >= 4 {
         return;
     }
     if stripped.is_empty() {
@@ -7923,6 +7923,12 @@ fn strip_trailing_space_from_vec_preserving_residual_newline(
 }
 
 fn strip_trailing_space_from_vec(elements: &mut Vec<Element<'_>>) -> bool {
+    if elements.len() >= 2
+        && matches!(&elements[elements.len() - 2], Element::LineBreak)
+        && matches!(&elements[elements.len() - 1], Element::Text(text) if text.chars().all(|c| c == '\n' || c == '\r'))
+    {
+        return false;
+    }
     let mut stripped = false;
     loop {
         match elements.last_mut() {

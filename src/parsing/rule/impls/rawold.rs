@@ -27,26 +27,35 @@ pub const RULE_RAWOLD: Rule = Rule {
     try_consume_fn,
 };
 
-pub(crate) fn wikidot_code_token_at(source: &str, start: usize) -> bool {
+fn wikidot_code_token_body_end(source: &str, start: usize) -> Option<usize> {
     let bytes = source.as_bytes();
     if start > 0 && bytes.get(start - 1) == Some(&b'`') {
-        return false;
+        return None;
     }
     if bytes.get(start + 1) != Some(&b'`') {
-        return false;
+        return None;
     }
 
     let body_start = start + 2;
-    let Some(offset) = source.get(body_start..).and_then(|rest| rest.find("``")) else {
-        return false;
-    };
-    let body_end = body_start + offset;
-    let body = &source[body_start..body_end];
-    !body.is_empty()
-        && !body
-            .chars()
-            .any(|c| matches!(c, '\'' | '\u{2018}' | '\u{2019}'))
-        && !body.ends_with('`')
+    let mut cursor = body_start;
+    while let Some(offset) = source.get(cursor..).and_then(|rest| rest.find("``")) {
+        let body_end = cursor + offset;
+        let body = &source[body_start..body_end];
+        if !body.is_empty()
+            && !body
+                .chars()
+                .any(|c| matches!(c, '\'' | '\u{2018}' | '\u{2019}'))
+            && !body.ends_with('`')
+        {
+            return Some(body_end);
+        }
+        cursor = body_end + 1;
+    }
+    None
+}
+
+pub(crate) fn wikidot_code_token_at(source: &str, start: usize) -> bool {
+    wikidot_code_token_body_end(source, start).is_some()
 }
 
 pub(crate) fn contains_wikidot_code_token(value: &str) -> bool {
@@ -72,7 +81,8 @@ fn try_consume_fn<'r, 't>(
 
     let source = parser.full_text().inner();
     let body_start = parser.current().span.start + 2;
-    let body_end = body_start + source[body_start..].find("``").unwrap();
+    let body_end = wikidot_code_token_body_end(source, parser.current().span.start)
+        .expect("rawold opener check found a closing token");
     let body = &source[body_start..body_end];
     let end = body_end + 2;
     while parser.current().span.start < end {

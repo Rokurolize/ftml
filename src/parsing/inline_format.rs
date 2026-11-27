@@ -438,6 +438,59 @@ fn join_explicit_list_with_following_run<'t>(elements: &mut Vec<Element<'t>>) {
     }
 }
 
+fn repair_quote_span_boundary_spaces(elements: &mut Vec<Element<'_>>) {
+    for element in elements.iter_mut() {
+        if let Element::Container(container) = element {
+            repair_quote_span_boundary_spaces(container.elements_mut());
+        }
+    }
+    let mut index = 0usize;
+    while index + 1 < elements.len() {
+        let crosses_quote_line = match &elements[index] {
+            Element::Container(container) => {
+                container.ctype() == ContainerType::Strikethrough
+                    && matches!(container.elements().last(), Some(Element::LineBreak))
+            }
+            _ => false,
+        };
+        if crosses_quote_line && let Element::Text(text) = &elements[index + 1] {
+            let mut repaired = text.as_ref().to_string();
+            let mut changed = false;
+            if repaired.starts_with(' ') {
+                repaired.remove(0);
+                changed = true;
+            }
+            for marker in ["\u{2014}", "\u{2026}", "\u{00ab}", "--", "...", "<<"] {
+                let spaced = format!(" {marker}");
+                if repaired.ends_with(&spaced) {
+                    let at = repaired.len() - spaced.len();
+                    repaired.remove(at);
+                    changed = true;
+                    break;
+                }
+            }
+            if changed {
+                if repaired.is_empty() {
+                    elements.remove(index + 1);
+                } else {
+                    elements[index + 1] = Element::Text(Cow::Owned(repaired));
+                }
+            }
+            let mut cursor = index + 1;
+            while cursor + 1 < elements.len() {
+                let whitespace = matches!(&elements[cursor], Element::Text(text) if text.chars().all(|c| c == ' ' || c == '\t'));
+                let typography = matches!(&elements[cursor + 1], Element::Text(text) if matches!(text.as_ref(), "--" | "..." | "<<" | "\u{2014}" | "\u{2026}" | "\u{00ab}"));
+                if whitespace && typography {
+                    elements.remove(cursor);
+                } else {
+                    cursor += 1;
+                }
+            }
+        }
+        index += 1;
+    }
+}
+
 fn normalize_sequence_children<'t>(elements: &mut Vec<Element<'t>>) {
     join_paragraph_tail_with_next_explicit_list(elements);
     join_explicit_list_with_following_run(elements);
@@ -466,6 +519,11 @@ fn normalize_sequence_children<'t>(elements: &mut Vec<Element<'t>>) {
             visit_children_mut(&mut element, normalize_sequence_inside_monospace);
         } else {
             visit_children_mut(&mut element, normalize_sequence);
+        }
+        if let Element::Container(container) = &mut element
+            && container.ctype() == ContainerType::Blockquote
+        {
+            repair_quote_span_boundary_spaces(container.elements_mut());
         }
         normalized.push(element);
         index += 1;
@@ -1346,6 +1404,7 @@ fn repair_strike_split_close_pass<'t>(elements: &mut Vec<Element<'t>>) -> bool {
     let mut changed = false;
 
     for element in mem::take(elements) {
+        let preceded_by_link = matches!(output.last(), Some(Element::Link { .. }));
         let is_strike = matches!(
             &element,
             Element::Container(container) if container.ctype() == ContainerType::Strikethrough
@@ -1356,13 +1415,18 @@ fn repair_strike_split_close_pass<'t>(elements: &mut Vec<Element<'t>>) -> bool {
         }
         let (shell, mut children) =
             FormatShell::into_parts(element).expect("formatter index has a shell");
-        match strike_split_close(&children) {
+        match strike_split_close(&children, preceded_by_link) {
             Some((child_index, prefix, suffix)) => {
                 let mut tail: Vec<Element<'t>> =
                     children.drain(child_index + 1..).collect();
                 children.truncate(child_index);
                 if !prefix.is_empty() {
                     children.push(Element::Text(Cow::Owned(prefix)));
+                }
+                if matches!(children.last(), Some(Element::Text(text)) if text.ends_with('\n'))
+                {
+                    children
+                        .push(Element::Partial(PartialElement::WikidotEmptyInlineOwner));
                 }
                 output.push(shell.build(children));
                 push_dash_split_text(&mut output, &suffix);
@@ -1378,9 +1442,45 @@ fn repair_strike_split_close_pass<'t>(elements: &mut Vec<Element<'t>>) -> bool {
     changed
 }
 
-fn strike_split_close(children: &[Element<'_>]) -> Option<(usize, String, String)> {
+fn strike_split_close(
+    children: &[Element<'_>],
+    preceded_by_link: bool,
+) -> Option<(usize, String, String)> {
+    if children.len() == 2
+        && matches!(&children[0], Element::LineBreak)
+        && let Element::Text(value) = &children[1]
+        && let Some(rest) = value.strip_prefix('\n')
+    {
+        let run_len = rest.bytes().take_while(|byte| *byte == b'-').count();
+        if run_len >= 4 || (preceded_by_link && run_len >= 2) {
+            return Some((1, "\n".to_string(), rest[2..].to_string()));
+        }
+    }
+    if children.len() >= 2 {
+        let last = children.len() - 1;
+        if let Element::Text(value) = &children[last] {
+            let run_len = value.bytes().take_while(|byte| *byte == b'-').count();
+            let newline_before = matches!(&children[last - 1], Element::LineBreak)
+                || matches!(&children[last - 1], Element::Text(text) if text.ends_with('\n'));
+            if newline_before && (run_len >= 4 || (preceded_by_link && run_len >= 2)) {
+                return Some((last, String::new(), value[2..].to_string()));
+            }
+        }
+    }
     if children.len() < 3 {
         return None;
+    }
+    for child_index in 1..children.len() {
+        let Element::Text(value) = &children[child_index] else {
+            continue;
+        };
+        let run_len = value.bytes().take_while(|byte| *byte == b'-').count();
+        if run_len == value.len()
+            && matches!(&children[child_index - 1], Element::LineBreak)
+            && (run_len >= 4 || (preceded_by_link && run_len >= 2))
+        {
+            return Some((child_index, String::new(), value[2..].to_string()));
+        }
     }
     let links = link_prefix_counts(children);
     for child_index in 1..children.len() - 1 {

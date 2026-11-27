@@ -112,16 +112,20 @@ fn try_consume_fn<'r, 't>(
                     } else {
                         trace!("Found empty raw (\"@@@@\"), followed by other text");
                         parser.step_n(2)?;
-                        return ok!(Elements::None);
+                        return if parser.settings().layout.legacy() {
+                            ok!(
+                                Element::Partial(PartialElement::WikidotEmptyInlineOwner,)
+                            )
+                        } else {
+                            ok!(Elements::None)
+                        };
                     }
                 }
 
                 (Token::Raw, _) => {
                     trace!("Found empty raw (\"@@@@\"), returning");
                     parser.step_n(2)?;
-                    return if parser.settings().layout.legacy()
-                        && super::footnote_first::starts_footnote(parser)
-                    {
+                    return if parser.settings().layout.legacy() {
                         ok!(Element::Partial(PartialElement::WikidotEmptyInlineOwner,))
                     } else {
                         ok!(Elements::None)
@@ -164,6 +168,13 @@ fn try_consume_fn<'r, 't>(
         if let Some(element) = special_case {
             return success_elements(element);
         }
+    }
+
+    if parser.settings().layout.legacy()
+        && ending_token == Token::Raw
+        && wikidot_double_at_body_has_continuation_marker(parser)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 
     let current = parser.step()?;
@@ -415,6 +426,15 @@ fn try_consume_fn<'r, 't>(
     }
 }
 
+fn wikidot_double_at_body_has_continuation_marker(parser: &Parser<'_, '_>) -> bool {
+    let source = parser.full_text().inner();
+    let body_start = parser.current().span.start + 2;
+    let Some(relative_close) = source[body_start..].find("@@") else {
+        return false;
+    };
+    source[body_start..body_start + relative_close].contains('\u{001f}')
+}
+
 fn finish_double_at_raw<'r, 't>(
     parser: &mut Parser<'r, 't>,
     element: Element<'t>,
@@ -563,7 +583,12 @@ mod tests {
             assert_eq!(result.unwrap(), Elements::Single(text!("@")));
         });
         with_raw_elements("@@@@", |result| {
-            assert_eq!(result.unwrap(), Elements::None);
+            assert_eq!(
+                result.unwrap(),
+                Elements::Single(Element::Partial(
+                    PartialElement::WikidotEmptyInlineOwner
+                )),
+            );
         });
         with_raw_elements("@@token@@", |result| {
             assert_eq!(result.unwrap(), Elements::Single(raw!("token")));

@@ -200,3 +200,5 @@ corpus-test/div/exhibited-opener-promotion/input.ftml	Div@0..84 descent-only
 corpus-test/div/exhibited-promotion-spent-closer/input.ftml	Div@0..93 descent-only
 corpus-test/note/exhibited-closer-balanced/input.ftml	Note@0..36 scan-only
 corpus-test/note/exhibited-closer-balanced/input.ftml	Note@0..54 descent-only
+corpus-test/blockquote/collapsible-tail-inline-body/input.ftml	Collapsible@2..34 scan-only
+corpus-test/blockquote/collapsible-tail-inline-body/input.ftml	Collapsible@2..35 descent-only

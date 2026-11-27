@@ -38,6 +38,10 @@ pub(super) fn substitute_wikidot(text: &mut String) {
             break;
         };
         let close = close_search + relative_close + "--]".len();
+        if has_raw_escape(&text[open..close]) {
+            scan = close;
+            continue;
+        }
         let (span_start, span_end) = (open, close);
         if let Some(closer_start) = hidden_iftags_opener_closer(text, open, close) {
             push_copied_range(
@@ -121,7 +125,9 @@ fn elide_comment_only_lines(text: &mut String) {
             break;
         };
         let close = close_search + relative_close + "--]".len();
-        if comment_contains_iftags_head(&text[open..close]) {
+        if comment_contains_iftags_head(&text[open..close])
+            || has_raw_escape(&text[open..close])
+        {
             scan = close;
             continue;
         }
@@ -155,6 +161,23 @@ fn elide_comment_only_lines(text: &mut String) {
         output.push_str(&text[copied_until..]);
         *text = output;
     }
+}
+
+fn has_raw_escape(comment: &str) -> bool {
+    let mut cursor = 0;
+    while let Some(relative) = comment[cursor..].find("@@") {
+        let start = cursor + relative;
+        let body_start = start + 2;
+        let Some(relative_close) = comment[body_start..].find("@@") else {
+            break;
+        };
+        let end = body_start + relative_close + 2;
+        if end > body_start + 2 {
+            return true;
+        }
+        cursor = end;
+    }
+    false
 }
 
 /// `,,[!-- c --],,` is a subscript whose body is only a comment. Live drops

@@ -147,6 +147,107 @@ pub(crate) fn raw_escapes(source: &str) -> Vec<RawEscape> {
     escapes
 }
 
+/// A raw escape paired with the placeholder ordinal live assigns it.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct NumberedEscape {
+    pub(crate) start: usize,
+    pub(crate) end: usize,
+    pub(crate) ordinal: usize,
+}
+
+/// Placeholder ordinals for attribute-value encoding.
+///
+/// Live numbers `@<...>@` escapes first, then reserves one number for each
+/// recognized code block (whose bodies are opaque), then numbers `@@...@@`
+/// escapes in document order, including those inside comments, and finally
+/// numbers `` ``...`` `` escapes. Reserved code-block numbers emit no
+/// placeholder themselves.
+pub(crate) fn numbered_escapes(source: &str) -> Vec<NumberedEscape> {
+    let html = scan_raw_html_escapes(source);
+    let at = scan_raw_at_escapes(source, &html);
+    let rawold = scan_rawold_escapes(source, &html, &at);
+    let code_ranges = crate::wikidot_code::active_ranges(source);
+
+    let mut ordinal = 0;
+    let mut numbered = Vec::new();
+
+    for escape in &html {
+        ordinal += 1;
+        numbered.push(NumberedEscape {
+            start: escape.start,
+            end: escape.end,
+            ordinal,
+        });
+    }
+
+    ordinal += code_ranges.len();
+
+    for escape in at.iter().chain(rawold.iter()) {
+        if code_ranges
+            .iter()
+            .any(|range| escape.start >= range.start && escape.end <= range.end)
+        {
+            continue;
+        }
+        ordinal += 1;
+        numbered.push(NumberedEscape {
+            start: escape.start,
+            end: escape.end,
+            ordinal,
+        });
+    }
+
+    numbered
+}
+
+fn scan_rawold_escapes(
+    source: &str,
+    html: &[RawEscape],
+    at: &[RawEscape],
+) -> Vec<RawEscape> {
+    let bytes = source.as_bytes();
+    let mut escapes = Vec::new();
+    let mut index = 0;
+
+    while index + 1 < bytes.len() {
+        if bytes[index] != b'`'
+            || bytes[index + 1] != b'`'
+            || (index > 0 && bytes[index - 1] == b'`')
+        {
+            index += 1;
+            continue;
+        }
+        let body_start = index + 2;
+        let Some(offset) = source[body_start..].find("``") else {
+            break;
+        };
+        let body_end = body_start + offset;
+        let body = &source[body_start..body_end];
+        if body.is_empty()
+            || body
+                .chars()
+                .any(|c| matches!(c, '\'' | '\u{2018}' | '\u{2019}'))
+            || body.ends_with('`')
+        {
+            index += 1;
+            continue;
+        }
+        let end = body_end + 2;
+        if html
+            .iter()
+            .chain(at.iter())
+            .any(|range| index >= range.start && index < range.end)
+        {
+            index = end;
+            continue;
+        }
+        escapes.push(RawEscape { start: index, end });
+        index = end;
+    }
+
+    escapes
+}
+
 /// Append `text` to `output` using live's date-format percent encoding,
 /// spelling escaped placeholders as their `%FF<ordinal>%FF` byte run.
 pub(crate) fn push_percent_encoded_placeholders(output: &mut String, text: &str) {
@@ -301,5 +402,67 @@ mod tests {
             &format!("x{PLACEHOLDER_OPEN}1{PLACEHOLDER_CLOSE}y"),
         );
         assert_eq!(output, "x%FF1%FFy");
+    }
+
+    fn ordinal_after(source: &str, needle: &str) -> usize {
+        let start = source.find(needle).unwrap();
+        numbered_escapes(source)
+            .into_iter()
+            .find(|escape| escape.start == start)
+            .unwrap()
+            .ordinal
+    }
+
+    #[test]
+    fn code_blocks_reserve_one_number_and_hide_their_bodies() {
+        let anchor = "[[a href=\"@@x@@\"]]y[[/a]]";
+        assert_eq!(ordinal_after(anchor, "@@x@@"), 1);
+        assert_eq!(
+            ordinal_after(&format!("[[code]]plain[[/code]]\n{anchor}"), "@@x@@"),
+            2
+        );
+        assert_eq!(
+            ordinal_after(&format!("{anchor}\n[[code]]plain[[/code]]"), "@@x@@"),
+            2
+        );
+        assert_eq!(
+            ordinal_after(
+                &format!("[[code]]a[[/code]]\n[[code]]b[[/code]]\n{anchor}"),
+                "@@x@@"
+            ),
+            3
+        );
+        let opaque = format!("[[code]]@@q@@ @@r@@[[/code]]\n{anchor}");
+        assert_eq!(ordinal_after(&opaque, "@@x@@"), 2);
+        assert!(
+            numbered_escapes(&opaque)
+                .iter()
+                .all(|escape| escape.start != opaque.find("@@q@@").unwrap())
+        );
+    }
+
+    #[test]
+    fn comment_tokens_count_in_document_order() {
+        let anchor = "[[a href=\"@@x@@\"]]y[[/a]]";
+        assert_eq!(
+            ordinal_after(&format!("[!-- @@q@@ --]\n{anchor}"), "@@x@@"),
+            2
+        );
+        assert_eq!(
+            ordinal_after(&format!("{anchor}\n[!-- @@q@@ --]"), "@@x@@"),
+            1
+        );
+        assert_eq!(
+            ordinal_after(&format!("[!-- plain --]\n{anchor}"), "@@x@@"),
+            1
+        );
+    }
+
+    #[test]
+    fn rawold_tokens_are_numbered_after_at_escapes() {
+        let source = "[[a href=\"@@x@@ ``y``\"]]z[[/a]]";
+        assert_eq!(ordinal_after(source, "@@x@@"), 1);
+        assert_eq!(ordinal_after(source, "``y``"), 2);
+        assert_eq!(ordinal_after("``y``\n@@x@@", "@@x@@"), 1);
     }
 }

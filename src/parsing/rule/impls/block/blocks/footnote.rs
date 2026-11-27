@@ -230,13 +230,16 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     if suppress_wikidot_body_reference {
         return ok!(false; Vec::new(), errors);
     }
-    let mut reference_elements = Vec::new();
-    if control_before_footnote {
-        reference_elements.push(Element::Delayed(
-            DelayedElement::wikidot_discarded_control_before_footnote(),
-        ));
+    if !control_before_footnote {
+        if fused_close {
+            return ok!(true; vec![Element::Footnote(index.into()), text!("]")], errors);
+        }
+        return ok!(Element::Footnote(index.into()), errors);
     }
-    reference_elements.push(Element::Footnote(index.into()));
+    let mut reference_elements = vec![
+        Element::Delayed(DelayedElement::wikidot_discarded_control_before_footnote()),
+        Element::Footnote(index.into()),
+    ];
     if fused_close {
         reference_elements.push(text!("]"));
     }
@@ -262,7 +265,7 @@ fn restore_wikidot_literal_block_line_break(elements: &mut Vec<Element<'_>>) {
         let Element::Text(text) = &elements[index] else {
             continue;
         };
-        if !text.starts_with("\n[[") {
+        if !text.as_ref().eq_ignore_ascii_case("\n[[div]][[/div]]") {
             continue;
         }
         let Element::Text(text) = elements.remove(index) else {
@@ -331,9 +334,8 @@ fn wikidot_unclosed_before_bibliography_closer(
         .find("[[/bibliography]]")
         .map(|index| opener_start + index);
     match (footnote_close, bibliography_close) {
-        (_, None) => false,
-        (Some(footnote), Some(bibliography)) => bibliography < footnote,
         (None, Some(_)) => true,
+        _ => false,
     }
 }
 

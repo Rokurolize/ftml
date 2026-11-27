@@ -333,10 +333,7 @@ fn wikidot_unclosed_before_bibliography_closer(
         .to_ascii_lowercase()
         .find("[[/bibliography]]")
         .map(|index| opener_start + index);
-    match (footnote_close, bibliography_close) {
-        (None, Some(_)) => true,
-        _ => false,
-    }
+    matches!((footnote_close, bibliography_close), (None, Some(_)))
 }
 
 fn wikidot_leave_enclosing_closer_for_parent<'r, 't>(

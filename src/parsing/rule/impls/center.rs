@@ -84,6 +84,15 @@ fn try_consume_fn<'r, 't>(
         let Elements::Single(Element::Container(paragraph)) = &mut elements else {
             unreachable!("center rule always creates one container");
         };
+        if !paragraph.elements().is_empty()
+            && paragraph
+                .elements()
+                .iter()
+                .all(|element| matches!(element, Element::Collapsible { .. }))
+        {
+            let body = paragraph.elements().to_vec();
+            return ok!(false; Elements::Multiple(body), errors);
+        }
         assert!(
             paragraph
                 .attributes_mut()

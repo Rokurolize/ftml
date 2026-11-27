@@ -9839,6 +9839,7 @@ struct WikidotFrameBuild<'t> {
     children: Vec<Element<'t>>,
     scored_div: bool,
     link: Option<WikidotFrameLink<'t>>,
+    heading: Option<HeadingReopen<'t>>,
     /// Head byte of a note frame, so a crossed close that pops the
     /// frame early retires that head from `note_opens`.
     note_head: Option<usize>,
@@ -9848,15 +9849,28 @@ struct WikidotFrameBuild<'t> {
     outer_close_eof: bool,
 }
 
-struct WikidotHeadingFrame<'t> {
-    attributes: AttributeMap<'t>,
-    children: Vec<Element<'t>>,
-}
-
-struct WikidotReopenState<'t> {
+struct WikidotReopenState {
     start_depth: usize,
     head: usize,
+}
+
+fn wrap_reopen_heading<'t>(
+    element: Element<'t>,
     heading: HeadingReopen<'t>,
+) -> Element<'t> {
+    let mut attributes = AttributeMap::new();
+    attributes.insert(WIKIDOT_HEADING_REOPEN_MARKER, Cow::Borrowed(""));
+    if let Some(id) = &heading.id {
+        attributes.insert("id", id.clone());
+    }
+    Element::Container(Container::new(
+        ContainerType::Header(Heading {
+            level: heading.level,
+            has_toc: false,
+        }),
+        vec![element],
+        attributes,
+    ))
 }
 
 fn unwrap_scored_frame_edges<'t>(children: &mut Vec<Element<'t>>) {
@@ -9902,8 +9916,7 @@ struct WikidotFrameAssembly<'t> {
     collapsible_closes: BTreeMap<usize, WikidotCollapsibleClose<'t>>,
     note_opens: BTreeSet<usize>,
     div_crossed_notes: BTreeSet<usize>,
-    heading_frame: Option<WikidotHeadingFrame<'t>>,
-    reopen: Option<WikidotReopenState<'t>>,
+    reopen: Option<WikidotReopenState>,
     forced_collapsible_closes: BTreeSet<usize>,
     swallow_orphan_div_break: bool,
     swallow_orphan_note_break: bool,
@@ -9922,7 +9935,6 @@ impl<'t> WikidotFrameAssembly<'t> {
             collapsible_closes: BTreeMap::new(),
             note_opens: BTreeSet::new(),
             div_crossed_notes: BTreeSet::new(),
-            heading_frame: None,
             reopen: None,
             forced_collapsible_closes: BTreeSet::new(),
             swallow_orphan_div_break: false,
@@ -9934,9 +9946,6 @@ impl<'t> WikidotFrameAssembly<'t> {
     }
 
     fn top(&mut self) -> &mut Vec<Element<'t>> {
-        if let Some(frame) = &mut self.heading_frame {
-            return &mut frame.children;
-        }
         match self.stack.last_mut() {
             Some(frame) => &mut frame.children,
             None => &mut self.output,
@@ -9979,44 +9988,10 @@ impl<'t> WikidotFrameAssembly<'t> {
         let Some(state) = self.reopen.take() else {
             return;
         };
-        if let Some(frame) = self.heading_frame.take() {
-            let element = Element::Container(Container::new(
-                ContainerType::Header(Heading {
-                    level: state.heading.level,
-                    has_toc: false,
-                }),
-                frame.children,
-                frame.attributes,
-            ));
-            match self.stack.last_mut() {
-                Some(frame) => frame.children.push(element),
-                None => self.output.push(element),
-            }
-        }
         while self.stack.len() > state.start_depth {
             self.pop_frame();
         }
         self.forced_collapsible_closes.insert(state.head);
-    }
-
-    fn reopen_heading_element(
-        &self,
-        children: Vec<Element<'t>>,
-        heading: &HeadingReopen<'t>,
-    ) -> Element<'t> {
-        let mut attributes = AttributeMap::new();
-        attributes.insert(WIKIDOT_HEADING_REOPEN_MARKER, Cow::Borrowed(""));
-        if let Some(id) = &heading.id {
-            attributes.insert("id", id.clone());
-        }
-        Element::Container(Container::new(
-            ContainerType::Header(Heading {
-                level: heading.level,
-                has_toc: false,
-            }),
-            children,
-            attributes,
-        ))
     }
 
     fn open_shell(&mut self, shell: WikidotBlockShell<'t>) {
@@ -10032,6 +10007,7 @@ impl<'t> WikidotFrameAssembly<'t> {
                     children: Vec::new(),
                     scored_div: scored,
                     link: None,
+                    heading: None,
                     note_head: None,
                     outer_close_eof,
                 });
@@ -10046,6 +10022,7 @@ impl<'t> WikidotFrameAssembly<'t> {
                     children: Vec::new(),
                     scored_div: false,
                     link: None,
+                    heading: None,
                     note_head: Some(head),
                     outer_close_eof,
                 });
@@ -10063,6 +10040,7 @@ impl<'t> WikidotFrameAssembly<'t> {
                     children: Vec::new(),
                     scored_div: false,
                     link: None,
+                    heading: None,
                     note_head: None,
                     outer_close_eof,
                 });
@@ -10093,45 +10071,16 @@ impl<'t> WikidotFrameAssembly<'t> {
                     children: Vec::new(),
                     scored_div: false,
                     link: None,
+                    heading: reopen_heading.clone(),
                     note_head: None,
                     outer_close_eof,
                 });
-                if let Some(heading) = &reopen_heading
-                    && !heading.label_empty
-                {
-                    let empty = self.reopen_heading_element(Vec::new(), heading);
-                    self.top().push(empty);
-                }
-                let folded_hidden = start_open;
-                if reopen_heading.is_some() {
-                    let mut attributes = wikidot_frame_attributes(&[(
-                        "class",
-                        "collapsible-block-folded",
-                    )]);
-                    if folded_hidden {
-                        attributes.insert("style", Cow::Borrowed("display:none"));
-                    }
-                    self.stack.push(WikidotFrameBuild {
-                        attributes,
-                        children: Vec::new(),
-                        scored_div: false,
-                        link: Some(WikidotFrameLink {
-                            text: show_text,
-                            show: true,
-                            spans: Vec::new(),
-                            heading: reopen_heading.clone(),
-                        }),
-                        note_head: None,
-                        outer_close_eof,
-                    });
-                } else {
-                    self.push_shell_link(
-                        "collapsible-block-folded",
-                        folded_hidden,
-                        show_text,
-                        true,
-                    );
-                }
+                self.push_shell_link(
+                    "collapsible-block-folded",
+                    start_open,
+                    show_text,
+                    true,
+                );
                 let mut unfolded_attributes =
                     wikidot_frame_attributes(&[("class", "collapsible-block-unfolded")]);
                 if !start_open {
@@ -10142,35 +10091,17 @@ impl<'t> WikidotFrameAssembly<'t> {
                     children: Vec::new(),
                     scored_div: false,
                     link: None,
+                    heading: None,
                     note_head: None,
                     outer_close_eof,
                 });
                 if show_top {
-                    if reopen_heading.is_some() {
-                        self.stack.push(WikidotFrameBuild {
-                            attributes: wikidot_frame_attributes(&[(
-                                "class",
-                                "collapsible-block-unfolded-link",
-                            )]),
-                            children: Vec::new(),
-                            scored_div: false,
-                            link: Some(WikidotFrameLink {
-                                text: hide_text,
-                                show: false,
-                                spans: Vec::new(),
-                                heading: reopen_heading.clone(),
-                            }),
-                            note_head: None,
-                            outer_close_eof,
-                        });
-                    } else {
-                        self.push_shell_link(
-                            "collapsible-block-unfolded-link",
-                            false,
-                            hide_text,
-                            false,
-                        );
-                    }
+                    self.push_shell_link(
+                        "collapsible-block-unfolded-link",
+                        false,
+                        hide_text,
+                        false,
+                    );
                 }
                 self.stack.push(WikidotFrameBuild {
                     attributes: wikidot_frame_attributes(&[(
@@ -10180,24 +10111,12 @@ impl<'t> WikidotFrameAssembly<'t> {
                     children: Vec::new(),
                     scored_div: false,
                     link: None,
+                    heading: None,
                     note_head: None,
                     outer_close_eof,
                 });
-                if let Some(heading) = reopen_heading {
-                    let mut attributes = AttributeMap::new();
-                    attributes.insert(WIKIDOT_HEADING_REOPEN_MARKER, Cow::Borrowed(""));
-                    if let Some(id) = &heading.id {
-                        attributes.insert("id", id.clone());
-                    }
-                    self.heading_frame = Some(WikidotHeadingFrame {
-                        attributes,
-                        children: Vec::new(),
-                    });
-                    self.reopen = Some(WikidotReopenState {
-                        start_depth,
-                        head,
-                        heading,
-                    });
+                if reopen_heading.is_some() {
+                    self.reopen = Some(WikidotReopenState { start_depth, head });
                 }
             }
         }
@@ -10481,13 +10400,18 @@ impl<'t> WikidotFrameAssembly<'t> {
         if kept_break {
             frame.children.push(Element::LineBreak);
         }
-        self.top().push(Element::WikidotBlockFrame {
+        let element = Element::WikidotBlockFrame {
             attributes: frame.attributes,
             children: frame.children,
             collapsible_link: frame.link,
             omit_close: false,
             outer_close_eof: frame.outer_close_eof,
-        });
+        };
+        let element = match frame.heading {
+            Some(heading) => wrap_reopen_heading(element, heading),
+            None => element,
+        };
+        self.top().push(element);
         self.top().extend(suffix);
     }
 
@@ -10527,34 +10451,23 @@ impl<'t> WikidotFrameAssembly<'t> {
             if frame.link.is_none() {
                 form_wikidot_frame_paragraphs(&mut frame.children);
             }
-            self.top().push(Element::WikidotBlockFrame {
+            let element = Element::WikidotBlockFrame {
                 attributes: frame.attributes,
                 children: frame.children,
                 collapsible_link: frame.link,
                 omit_close: false,
                 outer_close_eof: frame.outer_close_eof,
-            });
+            };
+            let element = match frame.heading {
+                Some(heading) => wrap_reopen_heading(element, heading),
+                None => element,
+            };
+            self.top().push(element);
             self.top().extend(suffix);
         }
     }
 
     fn finish(mut self) -> Vec<Element<'t>> {
-        if let Some(state) = self.reopen.take()
-            && let Some(frame) = self.heading_frame.take()
-        {
-            let element = Element::Container(Container::new(
-                ContainerType::Header(Heading {
-                    level: state.heading.level,
-                    has_toc: false,
-                }),
-                frame.children,
-                frame.attributes,
-            ));
-            match self.stack.last_mut() {
-                Some(frame) => frame.children.push(element),
-                None => self.output.push(element),
-            }
-        }
         while let Some(frame) = self.stack.pop() {
             let mut frame = frame;
             if frame.scored_div {
@@ -10574,13 +10487,18 @@ impl<'t> WikidotFrameAssembly<'t> {
             if frame.link.is_none() {
                 form_wikidot_frame_paragraphs(&mut frame.children);
             }
-            self.top().push(Element::WikidotBlockFrame {
+            let element = Element::WikidotBlockFrame {
                 attributes: frame.attributes,
                 children: frame.children,
                 collapsible_link: None,
                 omit_close,
                 outer_close_eof: frame.outer_close_eof,
-            });
+            };
+            let element = match frame.heading {
+                Some(heading) => wrap_reopen_heading(element, heading),
+                None => element,
+            };
+            self.top().push(element);
             self.top().extend(suffix);
         }
         self.output

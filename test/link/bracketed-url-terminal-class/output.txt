@@ -1,0 +1,7 @@
+[http://a+]
+[http://a\]
+[http://a@]
+[http://a(]
+[http://a[]
+[http://a<]
+x

@@ -48,6 +48,9 @@ const WIKIDOT_ONLY_AUTOLINK_SCHEMES: [&str; 9] = [
     "cvs://",
 ];
 
+const WIKIDOT_BRACKETED_URL_TERMINAL_CLASS: [char; 7] =
+    ['+', '\\', '@', '(', '[', '<', '$'];
+
 pub(crate) fn is_wikidot_only_autolink_url(url: &str) -> bool {
     WIKIDOT_ONLY_AUTOLINK_SCHEMES
         .iter()
@@ -450,6 +453,8 @@ where
 
     let field = CommentElidedText::new(source, url_start..end, comments);
     let mut url = url_with_leading_host_control(field.into_cow());
+    let bracketed_closer = preceded_by_left_bracket
+        && (url.as_bytes().last() == Some(&b']') || source[end..].starts_with(']'));
     let previous = start
         .checked_sub(1)
         .and_then(|index| source.as_bytes().get(index));
@@ -527,6 +532,15 @@ where
         trailing.extend(tail);
         trailing.push('|');
         for _ in 0..removed_characters {
+            url = without_last_character(url);
+        }
+    }
+    if bracketed_closer {
+        while let Some(last) = url.chars().next_back() {
+            if !WIKIDOT_BRACKETED_URL_TERMINAL_CLASS.contains(&last) {
+                break;
+            }
+            trailing.push(last);
             url = without_last_character(url);
         }
     }

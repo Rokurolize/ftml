@@ -106,10 +106,22 @@ where
         parser.step()?;
     }
     let closer = parser.current();
-    if closer.span.start != close || !closer.slice.starts_with(']') {
+    let dollar_math_closer = closer.token == Token::RightMath
+        && closer.span.start + 1 == close
+        && closer.slice.starts_with("$]");
+    let closer_start = if dollar_math_closer {
+        close
+    } else {
+        closer.span.start
+    };
+    if closer_start != close || (!dollar_math_closer && !closer.slice.starts_with(']')) {
         return Ok(None);
     }
-    let residual_closer = &closer.slice[1..];
+    let residual_closer = if dollar_math_closer {
+        "]"
+    } else {
+        &closer.slice[1..]
+    };
     parser.step()?;
 
     let target = &source[target_start..target_end];

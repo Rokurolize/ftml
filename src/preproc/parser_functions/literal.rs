@@ -52,6 +52,28 @@ impl LiteralRegionIndex {
         Self { ranges: merged }
     }
 
+    pub(crate) fn for_comments(source: &str) -> Self {
+        let mut ranges = Self::new(source).ranges;
+        ranges.extend(
+            crate::wikidot_raw_escape::rawold_escapes(source)
+                .into_iter()
+                .map(|escape| escape.start..escape.end),
+        );
+        ranges.sort_unstable_by_key(|range| (range.start, range.end));
+
+        let mut merged: Vec<Range<usize>> = Vec::with_capacity(ranges.len());
+        for range in ranges {
+            if let Some(previous) = merged.last_mut()
+                && range.start <= previous.end
+            {
+                previous.end = previous.end.max(range.end);
+            } else {
+                merged.push(range);
+            }
+        }
+        Self { ranges: merged }
+    }
+
     pub(crate) fn for_typography(source: &str) -> Self {
         let mut ranges = Self::new(source).ranges;
         collect_module_body_ranges(source, &mut ranges);

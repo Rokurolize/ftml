@@ -11270,8 +11270,14 @@ where
                         match scan {
                             WikidotHeadScan::LineEndGreedy => match current.token {
                                 Token::LeftComment => {
-                                    comments.push(consume_valid_comment(self)?);
-                                    continue;
+                                    let mut candidate = self.clone();
+                                    if let Ok(range) =
+                                        consume_valid_comment(&mut candidate)
+                                    {
+                                        comments.push(range);
+                                        self.update(&candidate);
+                                        continue;
+                                    }
                                 }
                                 Token::RightBlock | Token::RightLink => {
                                     if !wikidot_head_terminator_ends_line(self) {
@@ -11285,8 +11291,14 @@ where
                             WikidotHeadScan::QuotedValuesAreLiteral => {
                                 match current.token {
                                     Token::LeftComment => {
-                                        comments.push(consume_valid_comment(self)?);
-                                        continue;
+                                        let mut candidate = self.clone();
+                                        if let Ok(range) =
+                                            consume_valid_comment(&mut candidate)
+                                        {
+                                            comments.push(range);
+                                            self.update(&candidate);
+                                            continue;
+                                        }
                                     }
                                     Token::DoubleQuote => {
                                         in_quote = !in_quote;
@@ -11310,8 +11322,14 @@ where
                             }
                             WikidotHeadScan::EndsAtSingleBracket => match current.token {
                                 Token::LeftComment => {
-                                    comments.push(consume_valid_comment(self)?);
-                                    continue;
+                                    let mut candidate = self.clone();
+                                    if let Ok(range) =
+                                        consume_valid_comment(&mut candidate)
+                                    {
+                                        comments.push(range);
+                                        self.update(&candidate);
+                                        continue;
+                                    }
                                 }
                                 Token::RightBlock
                                 | Token::RightLink
@@ -11324,8 +11342,14 @@ where
                             },
                             WikidotHeadScan::QuotedLinksPass => match current.token {
                                 Token::LeftComment => {
-                                    comments.push(consume_valid_comment(self)?);
-                                    continue;
+                                    let mut candidate = self.clone();
+                                    if let Ok(range) =
+                                        consume_valid_comment(&mut candidate)
+                                    {
+                                        comments.push(range);
+                                        self.update(&candidate);
+                                        continue;
+                                    }
                                 }
                                 Token::DoubleQuote => in_quote = !in_quote,
                                 Token::RightBlock => break,

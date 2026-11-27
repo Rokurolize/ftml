@@ -266,7 +266,13 @@ where
         }
 
         if parser.current().token == Token::LeftComment {
-            comments.push(consume_valid_comment(parser)?);
+            let mut candidate = parser.clone();
+            if let Ok(range) = consume_valid_comment(&mut candidate) {
+                comments.push(range);
+                parser.update(&candidate);
+            } else {
+                parser.step()?;
+            }
         } else if parser.current().token == Token::LeftBlock
             && let Some(segment) = iftags_segment_fused(parser)
         {
@@ -382,7 +388,13 @@ where
             comment_closer_token_count_at(TokenWindow::at(parser), 0)
         {
             parser.step_n(token_count)?;
-            return Ok(start..parser.current().span.start);
+            let close_end = parser.current().span.start;
+            let opaque_close = close_end >= "--]".len()
+                && parser.comment_literal_region_contains(close_end - "--]".len());
+            if opaque_close {
+                continue;
+            }
+            return Ok(start..close_end);
         }
         if parser.current().token == Token::InputEnd {
             return Err(parser.make_err(ParseErrorKind::EndOfInput));

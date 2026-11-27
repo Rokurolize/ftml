@@ -222,6 +222,7 @@ fn wikidot_tabview_failed_content_gate(items: &[TabViewItem]) -> bool {
                     joined.push(' ');
                     match label {
                         LinkLabel::Text(text)
+                        | LinkLabel::TextPreservingNul(text)
                         | LinkLabel::Slug(text)
                         | LinkLabel::Title(text) => {
                             joined.push_str(text);

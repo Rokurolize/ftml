@@ -26,6 +26,22 @@ pub(crate) fn trim_wikidot_ascii_cow<'a>(value: Cow<'a, str>) -> Cow<'a, str> {
     }
 }
 
+pub(crate) fn trim_wikidot_ascii_end_cow<'a>(value: Cow<'a, str>) -> Cow<'a, str> {
+    match value {
+        Cow::Borrowed(value) => {
+            Cow::Borrowed(value.trim_end_matches([' ', '\t', '\r', '\n']))
+        }
+        Cow::Owned(value) => {
+            let trimmed = value.trim_end_matches([' ', '\t', '\r', '\n']);
+            if trimmed.len() == value.len() {
+                Cow::Owned(value)
+            } else {
+                Cow::Owned(trimmed.to_owned())
+            }
+        }
+    }
+}
+
 pub(crate) fn discard_wikidot_controls<'a>(value: Cow<'a, str>) -> Cow<'a, str> {
     if !value.chars().any(is_discarded_control) {
         return value;

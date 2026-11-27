@@ -34,6 +34,7 @@ use super::{
 use crate::parsing::inline_scope::WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE;
 use crate::parsing::parser::QuoteBodyLineStatus;
 use crate::parsing::rule::bibliography_order;
+use crate::parsing::rule::impls::url::is_wikidot_only_autolink_url;
 use crate::settings::WikitextMode;
 use crate::tree::{ContainerType, PartialElement};
 use std::borrow::Cow;
@@ -103,9 +104,10 @@ where
     }
     let target = &inner[target_start..index];
     if target.is_empty()
-        || !["http://", "https://", "ftp://", "mailto:"]
-            .iter()
-            .any(|scheme| target.starts_with(scheme))
+        || !(is_wikidot_only_autolink_url(target)
+            || ["http://", "https://", "ftp://", "mailto:"]
+                .iter()
+                .any(|scheme| target.starts_with(scheme)))
     {
         return None;
     }

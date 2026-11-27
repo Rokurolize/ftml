@@ -280,9 +280,10 @@ impl Handle {
     {
         let page_title;
         let label_text = match label {
-            LinkLabel::Text(text) | LinkLabel::Slug(text) | LinkLabel::Title(text) => {
-                text
-            }
+            LinkLabel::Text(text)
+            | LinkLabel::TextPreservingNul(text)
+            | LinkLabel::Slug(text)
+            | LinkLabel::Title(text) => text,
             LinkLabel::Url => match link {
                 LinkLocation::Url(url) => url.as_ref(),
                 LinkLocation::Page(page_ref) => {

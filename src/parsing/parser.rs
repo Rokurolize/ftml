@@ -5180,21 +5180,12 @@ impl<'r, 't> Parser<'r, 't> {
         .is_none()
     }
 
-    /// Whether `single_link_raw_forbids_link`'s probe walk that starts at
-    /// byte `start` is certain to reach `InputEnd` and return `false`.
-    ///
-    /// That walk only returns `true` through a successful `RULE_RAW`
-    /// attempt, and it only attempts `RULE_RAW` at a `Raw`/`LeftRaw`
-    /// token, which the tokenizer only produces from `@@`/`@<` bytes.
-    /// Without a `@` byte at or after `start` the walk can only step to
-    /// `InputEnd` (or to a token that already returns `false`), and it
-    /// cannot error, so it returns `false`.
     pub(crate) fn raw_forbids_link_reaches_input_end(&self, start: usize) -> bool {
         let mut cache = self.block_end_scan_cache.borrow_mut();
         find_stop_byte_forward(
             self.full_text().inner(),
             &mut cache.raw_forbids_stop,
-            b"@",
+            b"@`",
             start,
         )
         .is_none()

@@ -703,7 +703,7 @@ where
                 && !parser.wikidot_li_inside_item_body()
                 && !parser.wikidot_format_collection_body()
                 && !(parser.current().token == Token::ParagraphBreak
-                    && !wikidot_div_block_follows_break(parser))
+                    && (paragraph_safe || !wikidot_div_block_follows_break(parser)))
             {
                 elements.push(text!("\n"));
             }

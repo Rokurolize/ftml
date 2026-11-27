@@ -11808,6 +11808,22 @@ mod tests {
         assert_eq!(max_inline_scope_container_depth(&elements), 0);
     }
 
+    #[test]
+    fn wikidot_emptied_div_keeps_single_preceding_newline_and_companions_vanish() {
+        assert_eq!(
+            render_wikidot(
+                "[[div]]\nnewlines\n[[/div]]\n\n[[div]][[/div]]\n\n[[div]]\n[[/div]]\n\n[[div]]\napple\nbanana\n[[/div]]"
+            ),
+            "<div><p>newlines</p></div>\n[[div]][[/div]]\n<div><p>apple<br />\nbanana</p></div>"
+        );
+        // Companion shapes: finding 713 (sole-line empty div) and finding 735 (span-emptied div).
+        assert_eq!(render_wikidot(": \n[[div]]\n[[/div]]"), "");
+        assert_eq!(
+            render_wikidot("[[div]]\n[[span]]\n= [[/span]]\n[[/div]]"),
+            ""
+        );
+    }
+
     fn max_inline_scope_container_depth(elements: &[Element<'_>]) -> usize {
         elements
             .iter()

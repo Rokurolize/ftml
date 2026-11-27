@@ -1179,7 +1179,7 @@ where
                 stack.mark_next_unwrapped_after_block();
             }
             if div_has_same_line_residual {
-                if (vanished_empty_div || div_in_span_source) && inline_div_opener {
+                if vanished_empty_div || (div_in_span_source && inline_div_opener) {
                     stack.mark_wikidot_vanished_div_residual();
                 } else if parser.in_wikidot_span_body() {
                     stack.mark_next_unwrapped_after_block();

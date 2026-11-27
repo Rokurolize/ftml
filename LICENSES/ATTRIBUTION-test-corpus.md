@@ -16,7 +16,7 @@ The fixtures `table/cell-stray-table-closer` and `table/rowless-nested-table-lit
 
 The fixture `iframe/backslash-normalized` is reduced from a live-measured synthetic probe on sigma10-jp-test (muse-probe4d-nbsp-iframe). Only the synthetic iframe URL fragment was kept; the expected `wikidot.html` output was captured from a saved page view.
 
-The fixtures under `test/footnote/fake-local-*` are reduced from a live-measured synthetic probe on sigma10-jp-test (muse-probe31-fake-footnote-link, saved 2026-11-26). Only the synthetic stray-close and footnote/bibitem/div/span/bibliography fragments were kept; the expected `wikidot.html` outputs were captured from the saved page view.
+The fixtures under `test/footnote/fake-local-*` are reduced from live-measured synthetic probes. Most come from sigma10-jp-test probe muse-probe31-fake-footnote-link (saved 2026-11-26); the div pair, div close, and foo pair controls are pinned to the fresher REFCORR51 saved-page evidence on sandbox-for-codex (probe pages muse-probe-hunt-blockopen-stray-matrix-a and the isolated stray-div discriminators, snapshot-75). Only the synthetic stray-close and footnote/bibitem/div/span/bibliography fragments were kept; the expected `wikidot.html` outputs were captured from saved page views.
 
 The fixtures under `test/span/refcorr40-id-*`, `test/div/refcorr40-id-*` and `test/anchor/refcorr40-id-*` use the synthetic id shapes pinned in the REFCORR40 live set (probes muse-probe-hunt-spanid-id-unicode-a, -id-unicode-b, -id-ascii, -id-edges, -div-attrs and -anchor-attrs on sandbox-for-codex). Only the synthetic attribute fragments were kept; no page prose was carried into the fixtures.
 

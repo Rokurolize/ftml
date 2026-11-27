@@ -143,6 +143,84 @@ where
     Ok(Some(Elements::Multiple(elements)))
 }
 
+pub(crate) fn wikidot_divprefilter_bare_join(
+    source: &str,
+    start: usize,
+) -> Option<(usize, String)> {
+    let bytes = source.as_bytes();
+    if !bytes
+        .get(start..start + "[[/div]]".len())
+        .is_some_and(|close| close.eq_ignore_ascii_case(b"[[/div]]"))
+    {
+        return None;
+    }
+
+    let mut open = start + "[[/div]]".len();
+    while bytes
+        .get(open)
+        .is_some_and(|byte| byte.is_ascii_whitespace() || *byte == b'\x0b')
+    {
+        open += 1;
+    }
+    if !bytes.get(open..open + 2).is_some_and(|head| head == b"[[")
+        || !bytes
+            .get(open + 2..open + 5)
+            .is_some_and(|name| name.eq_ignore_ascii_case(b"div"))
+    {
+        return None;
+    }
+
+    let mut end = open + 5;
+    loop {
+        match bytes.get(end) {
+            Some(b']') if bytes.get(end + 1) == Some(&b']') => {
+                let suffix = &source[open + 5..end];
+                let mut tail = end + 2;
+                while matches!(bytes.get(tail), Some(b' ' | b'\t')) {
+                    tail += 1;
+                }
+                if matches!(suffix, "" | "_")
+                    && bytes.get(tail) == Some(&b'\n')
+                    && bytes[tail + 1..]
+                        .windows("[[/div]]".len())
+                        .any(|close| close.eq_ignore_ascii_case(b"[[/div]]"))
+                {
+                    return None;
+                }
+                let mut literal = String::from("[[/div]][[div");
+                literal.push_str(&source[open + 5..end + 2]);
+                return Some((end + 2, literal));
+            }
+            Some(byte) if byte.is_ascii_whitespace() || *byte == b'\x0b' => {
+                return None;
+            }
+            Some(_) => end += 1,
+            None => return None,
+        }
+    }
+}
+
+pub(crate) fn try_consume_wikidot_divprefilter_join<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+) -> Result<Option<Elements<'t>>, ParseError>
+where
+    'r: 't,
+{
+    if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
+    {
+        return Ok(None);
+    }
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start;
+    let Some((end, literal)) = wikidot_divprefilter_bare_join(source, start) else {
+        return Ok(None);
+    };
+    while parser.current().span.start < end {
+        parser.step()?;
+    }
+    Ok(Some(Elements::Single(Element::Text(Cow::Owned(literal)))))
+}
+
 fn try_consume_wikidot_unmatched_inline_close_link<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError>
@@ -152,6 +230,9 @@ where
     if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
     {
         return Ok(None);
+    }
+    if let Some(elements) = try_consume_wikidot_divprefilter_join(parser)? {
+        return Ok(Some(elements));
     }
 
     if parser.in_wikidot_span_body() || parser.in_wikidot_size_body() {
@@ -1269,6 +1350,9 @@ where
     if !parser.settings().layout.legacy() || parser.current().token != Token::LeftBlockEnd
     {
         return Ok(None);
+    }
+    if let Some(elements) = try_consume_wikidot_divprefilter_join(parser)? {
+        return Ok(Some(elements));
     }
 
     if parser.in_wikidot_span_body() {

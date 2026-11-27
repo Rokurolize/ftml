@@ -28,6 +28,7 @@ use crate::parsing::collect::{
     collect_text_resolved_fused, consume_iftags_segment_fused, consume_valid_comment,
     iftags_segment_fused,
 };
+use crate::parsing::consume::try_consume_wikidot_divprefilter_join;
 use crate::parsing::unmatched_close_scan::{LinkLabelScanMemo, LinkTargetScanMemo};
 use crate::parsing::{
     ParseSuccess, discard_wikidot_controls, is_discarded_control, trim_cow,
@@ -473,6 +474,9 @@ where
         || (parser.at_body_end_boundary() && !voided_wikidot_line_owned_close(parser))
     {
         return Ok(None);
+    }
+    if let Some(elements) = try_consume_wikidot_divprefilter_join(parser)? {
+        return Ok(Some(elements));
     }
     if end_block_name_at(parser.remaining(), 0)
         .is_some_and(|name| end_block_scope_blocked(parser, &name))

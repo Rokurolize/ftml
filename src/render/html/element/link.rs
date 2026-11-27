@@ -254,9 +254,20 @@ pub fn render_link(
         ($attr:expr) => {{
             let mut tag = ctx.html().a();
             tag.attr($attr);
-            handle.get_link_label(&site, link, label, |label| {
-                tag.contents(label);
-            });
+            if let LinkLabel::TextPreservingNul(text) = label {
+                tag.inner(|ctx| {
+                    for (index, part) in text.split('\0').enumerate() {
+                        if index > 0 {
+                            ctx.push_raw('\0');
+                        }
+                        ctx.push_escaped_text(part);
+                    }
+                });
+            } else {
+                handle.get_link_label(&site, link, label, |label| {
+                    tag.contents(label);
+                });
+            }
         }};
     }
 

@@ -451,6 +451,29 @@ where
         parser.step()?;
     }
 
+    let mut adjacent_residue = None;
+    if !bracket_fallback && source[end..].starts_with("[[") {
+        let inner_start = end + 2;
+        if let Some(offset) = source[inner_start..].find("]]") {
+            let inner = &source[inner_start..inner_start + offset];
+            let scheme = ["http://", "https://", "ftp://", "mailto:"]
+                .iter()
+                .any(|prefix| inner.starts_with(prefix))
+                || is_wikidot_only_autolink_url(inner);
+            if scheme && !inner.chars().any(char::is_whitespace) {
+                let span_end = inner_start + offset + 2;
+                let mut probe = parser.clone();
+                while probe.current().span.start < span_end
+                    && probe.current().token != Token::InputEnd
+                {
+                    probe.step()?;
+                }
+                parser.update(&probe);
+                adjacent_residue = Some(&source[end..span_end]);
+            }
+        }
+    }
+
     let field = CommentElidedText::new(source, url_start..end, comments);
     let mut url = url_with_leading_host_control(field.into_cow());
     let bracketed_closer = preceded_by_left_bracket
@@ -476,12 +499,13 @@ where
             | Token::RightBlock
     ) || suffix.is_some();
     let mut trailing = Vec::new();
-    // Live Wikidot terminates the automatic URL before a pipe that is
-    // immediately followed by a quote; the pipe renders as text outside the link.
-    if url.ends_with('|')
-        && matches!(source[end..].chars().next(), Some('\'') | Some('"'))
-    {
+    let quote_follows = matches!(source[end..].chars().next(), Some('\'') | Some('"'));
+    if url.ends_with('|') && quote_follows {
         trailing.push('|');
+        url = without_last_character(url);
+    }
+    if url.ends_with(']') && quote_follows {
+        trailing.push(']');
         url = without_last_character(url);
     }
     if at_sentence_boundary {
@@ -544,7 +568,10 @@ where
             url = without_last_character(url);
         }
     }
-    let trailing: String = trailing.iter().rev().collect();
+    let mut trailing: String = trailing.iter().rev().collect();
+    if let Some(residue) = adjacent_residue {
+        trailing.push_str(residue);
+    }
 
     let link = Element::Link {
         ltype: LinkType::Direct,

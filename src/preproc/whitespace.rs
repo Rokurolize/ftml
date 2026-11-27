@@ -1084,6 +1084,34 @@ fn append_replaced_tabs(output: &mut String, input: &str, width: usize) {
     }
 }
 
+fn append_wikidot_prose_tabs(output: &mut String, input: &str) {
+    let mut cursor = 0;
+    while let Some(offset) = input[cursor..].find('[') {
+        let open = cursor + offset;
+        output.push_str(&input[cursor..open]);
+        let Some(close_offset) = input[open + 1..].find(']') else {
+            append_replaced_tabs(output, &input[open..], 1);
+            return;
+        };
+        let close = open + 1 + close_offset;
+        output.push('[');
+        let mut saw_separator = false;
+        for ch in input[open + 1..close].chars() {
+            if ch == '\t' {
+                output
+                    .extend(std::iter::repeat_n(' ', if saw_separator { 4 } else { 1 }));
+                saw_separator = true;
+            } else {
+                saw_separator |= ch == ' ';
+                output.push(ch);
+            }
+        }
+        output.push(']');
+        cursor = close + 1;
+    }
+    append_replaced_tabs(output, &input[cursor..], 1);
+}
+
 fn append_wikidot_block_head_tabs(output: &mut String, head: &str) {
     if wikidot_lone_tab_argument_region(head) {
         append_replaced_tabs(output, head, 2);
@@ -1247,7 +1275,7 @@ fn replace_tabs(text: &mut String, buffer: &mut String, wikidot_compatibility: b
     let mut cursor = 0;
     while let Some(open_offset) = text[cursor..].find("[[") {
         let open = cursor + open_offset;
-        append_replaced_tabs(buffer, &text[cursor..open], 1);
+        append_wikidot_prose_tabs(buffer, &text[cursor..open]);
 
         let end = if text[open..].starts_with("[[[") {
             text[open + 3..]
@@ -1266,7 +1294,7 @@ fn replace_tabs(text: &mut String, buffer: &mut String, wikidot_compatibility: b
             break;
         }
     }
-    append_replaced_tabs(buffer, &text[cursor..], 1);
+    append_wikidot_prose_tabs(buffer, &text[cursor..]);
     std::mem::swap(text, buffer);
 }
 

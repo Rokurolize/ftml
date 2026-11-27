@@ -1311,7 +1311,7 @@ where
             Element::Link {
                 ltype: LinkType::Direct,
                 link: LinkLocation::Url(cow!("/")),
-                label: LinkLabel::Text(cow!(label)),
+                label: LinkLabel::TextPreservingNul(cow!(label)),
                 target: None,
             },
             text!("]"),
@@ -1371,6 +1371,8 @@ where
         )));
     }
     scan.step()?;
+    let mut first_label_end = None;
+    let mut resume_after_label = None;
     while !matches!(
         scan.current().token,
         Token::LeftBlock
@@ -1380,6 +1382,17 @@ where
             | Token::ParagraphBreak
             | Token::InputEnd
     ) {
+        if first_label_end.is_none()
+            && matches!(
+                scan.current().token,
+                Token::RightBracket | Token::RightBlock | Token::RightLink
+            )
+        {
+            first_label_end = Some(scan.current().span.start);
+            let mut resume = scan.clone();
+            resume.step()?;
+            resume_after_label = Some(resume);
+        }
         scan.step()?;
     }
     // Live r10: a `[[[` link between the closes forms on its own and the
@@ -1450,8 +1463,15 @@ where
     } else {
         Cow::Owned(format!("{}{}", &first[2..], url_extra))
     };
-    let label = source[label_from..second_end - 2].trim();
-    parser.update(&scan);
+    let label_end = first_label_end.unwrap_or(second_end - 2);
+    let label = source[label_from..label_end].trim();
+    if label_end != second_end - 2
+        && let Some(resume) = resume_after_label
+    {
+        parser.update(&resume);
+    } else {
+        parser.update(&scan);
+    }
     Ok(Some(wikidot_adjacent_close_link(
         url,
         cow!(label),
@@ -3443,7 +3463,7 @@ mod tests {
                 Element::Link {
                     ltype: LinkType::Direct,
                     link: LinkLocation::Url(cow!("/")),
-                    label: LinkLabel::Text(cow!("head")),
+                    label: LinkLabel::TextPreservingNul(cow!("head")),
                     target: None,
                 },
                 text!("]"),

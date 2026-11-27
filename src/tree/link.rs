@@ -202,6 +202,8 @@ fn link_location_parse_with_interwiki_expands_known_prefixes() {
 pub enum LinkLabel<'a> {
     Text(Cow<'a, str>),
 
+    TextPreservingNul(Cow<'a, str>),
+
     /// Page slug-based link label.
     ///
     /// This is set when the link is also the label.
@@ -229,6 +231,9 @@ impl LinkLabel<'_> {
     pub fn to_owned(&self) -> LinkLabel<'static> {
         match self {
             LinkLabel::Text(text) => LinkLabel::Text(string_to_owned(text)),
+            LinkLabel::TextPreservingNul(text) => {
+                LinkLabel::TextPreservingNul(string_to_owned(text))
+            }
             LinkLabel::Slug(text) => LinkLabel::Slug(string_to_owned(text)),
             LinkLabel::Url => LinkLabel::Url,
             LinkLabel::Page => LinkLabel::Page,

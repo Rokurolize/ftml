@@ -1333,7 +1333,11 @@ fn wikidot_angle_quote_protected_ranges(text: &str, wikidot: bool) -> Vec<Range<
 
     for token in tokens {
         if matches!(token.token, Token::Url | Token::UrlStar) {
-            ranges.push(token.span.clone());
+            let mut end = token.span.end;
+            while end > token.span.start && text.as_bytes()[end - 1] == b'>' {
+                end -= 1;
+            }
+            ranges.push(token.span.start..end);
         }
     }
 
@@ -1376,9 +1380,11 @@ fn collect_link_ranges(
                 }
             }
             Token::LeftBracket
-                if tokens
-                    .get(index + 1)
-                    .is_some_and(|next| next.token == Token::Url) =>
+                if tokens.get(index + 1).is_some_and(|next| {
+                    next.token == Token::Url
+                        || (next.slice.starts_with('/')
+                            && !next.slice.contains(['\'', '"']))
+                }) =>
             {
                 single_start = Some(token.span.start);
             }

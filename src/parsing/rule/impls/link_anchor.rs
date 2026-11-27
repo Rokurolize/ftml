@@ -19,6 +19,7 @@
  */
 
 use super::RULE_COMMENT;
+use super::link_single::single_link_raw_forbids_link;
 use super::prelude::*;
 use crate::id_prefix::isolate_ids;
 use crate::parsing::ParseSuccess;
@@ -83,6 +84,10 @@ fn try_consume_anchor<'r, 't>(
 where
     'r: 't,
 {
+    if parser.settings().layout.legacy() && single_link_raw_forbids_link(parser)? {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     let url_close = [ParseCondition::current(Token::Whitespace)];
     let url_invalid = [
         ParseCondition::current(Token::RightBracket),

@@ -21,6 +21,7 @@
 use super::RULE_COMMENT;
 use super::math::wikidot_math_candidate_is_complete;
 use super::prelude::*;
+use super::rawold::backtick_starts_rawold;
 use crate::delayed::{DelayedElement, GeneratedKind};
 use crate::parsing::collect::{
     collect_comment_elided_keep, collect_comment_elided_keep_from,
@@ -30,6 +31,7 @@ use crate::parsing::collect::{
 use crate::parsing::unmatched_close_scan::{LinkLabelScanMemo, LinkTargetScanMemo};
 use crate::parsing::{
     ParseSuccess, discard_wikidot_controls, trim_cow, trim_wikidot_ascii_cow,
+    trim_wikidot_ascii_end_cow,
 };
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
 use crate::url::is_url;
@@ -237,6 +239,7 @@ where
         target_end,
         authored_prefix_has_link_authority,
         false,
+        true,
     )
 }
 
@@ -259,7 +262,7 @@ where
     let WikidotLabel {
         text: label,
         residual_closer,
-    } = collect_wikidot_label(&mut attempt, false).ok()?;
+    } = collect_wikidot_label(&mut attempt, false, None).ok()?;
     if !residual_closer.is_empty() || label.is_empty() {
         return None;
     }
@@ -632,6 +635,7 @@ fn link_end_block<'r, 't>(
         target_end,
         authored_prefix_has_link_authority,
         true,
+        false,
     )?;
 
     Ok((
@@ -658,6 +662,7 @@ fn wikidot_link_from_target<'r, 't>(
     target_end: usize,
     authored_prefix_has_link_authority: bool,
     link_memo: bool,
+    preserve_leading_space: bool,
 ) -> ParseResult<'r, 't, Elements<'t>>
 where
     'r: 't,
@@ -728,11 +733,27 @@ where
         None => false,
     };
 
+    let label_start = preserve_leading_space
+        .then(|| {
+            parser
+                .full_text()
+                .inner()
+                .get(target_end..)
+                .and_then(|rest| rest.chars().next())
+                .filter(|ch| matches!(ch, ' ' | '\t'))
+                .map(|ch| target_end + ch.len_utf8())
+        })
+        .flatten();
     let WikidotLabel {
         text: label,
         residual_closer,
-    } = collect_wikidot_label(parser, link_memo)?;
-    let label = trim_wikidot_ascii_cow(discard_wikidot_controls(label));
+    } = collect_wikidot_label(parser, link_memo, label_start)?;
+    let label = discard_wikidot_controls(label);
+    let label = if label_start.is_some() {
+        trim_wikidot_ascii_end_cow(label)
+    } else {
+        trim_wikidot_ascii_cow(label)
+    };
 
     let element = match (disposition, interwiki_url) {
         (WikidotLinkDisposition::LabelOnly, Some(expanded)) => {
@@ -913,6 +934,7 @@ where
 fn collect_wikidot_label<'r, 't>(
     parser: &mut Parser<'r, 't>,
     link_memo: bool,
+    label_start: Option<usize>,
 ) -> Result<WikidotLabel<'t>, ParseError>
 where
     'r: 't,
@@ -927,7 +949,7 @@ where
         None
     };
     let mut traversed = Vec::new();
-    let result = collect_wikidot_label_inner(parser, memo, &mut traversed);
+    let result = collect_wikidot_label_inner(parser, memo, &mut traversed, label_start);
     if let (Some(memo), Err(_)) = (memo, &result) {
         parser.cache_link_label_scan_failed(
             &traversed,
@@ -943,6 +965,7 @@ fn collect_wikidot_label_inner<'r, 't>(
     parser: &mut Parser<'r, 't>,
     link_memo: Option<LinkLabelScanMemo>,
     traversed: &mut Vec<usize>,
+    label_start: Option<usize>,
 ) -> Result<WikidotLabel<'t>, ParseError>
 where
     'r: 't,
@@ -952,7 +975,7 @@ where
     }
 
     let source = parser.full_text().inner();
-    let start = parser.current().span.start;
+    let start = label_start.unwrap_or_else(|| parser.current().span.start);
     let mut copied_until = start;
     let mut without_comments = None::<String>;
 
@@ -1416,7 +1439,7 @@ impl WikidotNamedAnchorOwnerScan {
     }
 }
 
-fn single_link_raw_forbids_link<'r, 't>(
+pub(super) fn single_link_raw_forbids_link<'r, 't>(
     parser: &Parser<'r, 't>,
 ) -> Result<bool, ParseError>
 where
@@ -1424,12 +1447,6 @@ where
 {
     use super::raw::RULE_RAW;
 
-    // The probe walk only ever returns `true` through a successful
-    // `RULE_RAW` attempt at a `Raw`/`LeftRaw` token, and the tokenizer
-    // only produces those from `@@`/`@<` bytes. With no `@` left the walk
-    // can only step to `InputEnd` (or to a token that already returns
-    // `false`), so skip it: for a long run of `[` that walk used to scan
-    // the rest of the document once per opener.
     if parser.raw_forbids_link_reaches_input_end(parser.current().span.start) {
         return Ok(false);
     }
@@ -1506,6 +1523,12 @@ where
                     return Ok(true);
                 }
                 probe.step()?;
+            }
+
+            _ if probe.current().slice.starts_with('`')
+                && backtick_starts_rawold(&probe) =>
+            {
+                return Ok(true);
             }
 
             _ => {

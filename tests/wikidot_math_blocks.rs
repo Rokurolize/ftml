@@ -275,3 +275,75 @@ fn dense_valid_and_crossed_math_candidates_stay_bounded() {
         "{html}"
     );
 }
+
+#[test]
+fn wikidot_math_environment_gate_matches_live_allowlist_and_counter() {
+    let environments = [
+        "equation",
+        "align",
+        "gather",
+        "eqnarray",
+        "multline",
+        "split",
+        "alignat",
+        "gathered",
+        "aligned",
+        "alignedat",
+        "cases",
+        "matrix",
+        "pmatrix",
+        "bmatrix",
+        "smallmatrix",
+        "array",
+        "Bmatrix",
+        "vmatrix",
+        "Vmatrix",
+    ];
+    for env in environments {
+        let by_type = format!("[[math type=\"{env}\"]]\nx=1\n[[/math]]");
+        let (type_html, _) = render(&by_type);
+        assert_eq!(
+            type_html,
+            format!(
+                "<span class=\"equation-number\">(1)</span>\n<div class=\"math-equation\" id=\"equation-1\">\\begin{{{env}}} x=1 \\end{{{env}}}</div>"
+            ),
+            "type={env}"
+        );
+
+        let by_body = format!("[[math]]\n\\begin{{{env}}}x=1\\end{{{env}}}\n[[/math]]");
+        let (body_html, _) = render(&by_body);
+        assert_eq!(
+            body_html,
+            format!(
+                "<span class=\"equation-number\">(1)</span>\n<div class=\"math-equation\" id=\"equation-1\">\\begin{{{env}}} x=1 \\end{{{env}}}</div>"
+            ),
+            "body={env}"
+        );
+    }
+
+    let neg = concat!(
+        "[[math type=\"flalign\"]]\nx=1\n[[/math]]\n\n",
+        "[[math type=\"align \"]]\nx=1\n[[/math]]\n\n",
+        "[[math type=\"align*\"]]\nx=1\n[[/math]]\n\n",
+        "[[math type=\"a*b\"]]\nx=1\n[[/math]]\n\n",
+        "[[math]]\n\\begin{align*}x=1\\end{align*}\n[[/math]]\n\n",
+        "[[math type=\"align\"]]\n\\begin{flalign}x=1\\end{flalign}\n[[/math]]\n\n",
+        "[[math type=\"equation\"]]\na & b\n[[/math]]",
+    );
+    let (neg_html, _) = render(neg);
+    assert_eq!(
+        neg_html,
+        concat!(
+            "<div class=\"error-block\">Unsupported math environment \"flalign\"</div>",
+            "<div class=\"error-block\">Unsupported math environment \"align \"</div>",
+            "<span class=\"equation-number\">(3)</span>\n",
+            "<div class=\"math-equation\" id=\"equation-3\">\\begin{align} x=1 \\end{align}</div>",
+            "<div class=\"error-block\">Unsupported math environment \"ab\"</div>",
+            "<span class=\"equation-number\">(5)</span>\n",
+            "<div class=\"math-equation\" id=\"equation-5\">\\begin{align} x=1 \\end{align}</div>",
+            "<div class=\"error-block\">Unsupported math environment \"flalign\"</div>",
+            "<span class=\"equation-number\">(7)</span>\n",
+            "<div class=\"math-equation\" id=\"equation-7\">\\begin{align} a &amp; b \\end{align}</div>",
+        )
+    );
+}

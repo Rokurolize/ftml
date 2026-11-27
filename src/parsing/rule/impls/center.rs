@@ -19,7 +19,7 @@
  */
 
 use super::prelude::*;
-use crate::tree::Alignment;
+use crate::tree::{Alignment, AttributeMap, Container};
 
 pub const RULE_CENTER: Rule = Rule {
     name: "center",
@@ -84,6 +84,26 @@ fn try_consume_fn<'r, 't>(
         let Elements::Single(Element::Container(paragraph)) = &mut elements else {
             unreachable!("center rule always creates one container");
         };
+        if paragraph.elements().len() == 1
+            && matches!(
+                paragraph.elements().first(),
+                Some(Element::Collapsible { elements, .. }) if elements.is_empty()
+            )
+        {
+            let body = paragraph.elements().to_vec();
+            let mut shell_attributes = AttributeMap::new();
+            assert!(
+                shell_attributes.insert("style", cow!(Alignment::Center.wd_html_style()))
+            );
+            shell_attributes
+                .insert(crate::tree::WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER, cow!(""));
+            let shell = Element::Container(Container::new(
+                ContainerType::Paragraph,
+                Vec::new(),
+                shell_attributes,
+            ));
+            return ok!(false; Elements::Multiple(vec![shell].into_iter().chain(body).collect()), errors);
+        }
         if !paragraph.elements().is_empty()
             && paragraph
                 .elements()

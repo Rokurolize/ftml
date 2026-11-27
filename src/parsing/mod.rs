@@ -45,6 +45,7 @@ mod string;
 mod strip;
 mod token;
 mod unmatched_close_scan;
+mod wikidot_collapsible_placement;
 mod wikidot_text;
 
 mod prelude {
@@ -259,7 +260,7 @@ where
     let code_blocks = parsed.code_blocks;
     let table_of_contents_depths = parsed.table_of_contents_depths;
     let mut footnotes = parsed.footnotes;
-    let has_footnote_block = parsed.has_footnote_block;
+    let mut has_footnote_block = parsed.has_footnote_block;
     let mut bibliographies = parsed.bibliographies;
     let has_generated = tokenization.has_generated();
     let has_suppression_seam_candidate = tokenization.tokens().iter().any(|token| {
@@ -333,6 +334,12 @@ where
                 for footnote in &mut footnotes {
                     footnote::drop_empty_footnote_list_items_deep(footnote);
                 }
+                wikidot_collapsible_placement::repair_wikidot_collapsible_placement(
+                    &mut elements,
+                    &mut footnotes,
+                    tokenization.full_text().inner(),
+                    &mut has_footnote_block,
+                );
                 for (index, bibliography) in
                     bibliographies.slice_mut().iter_mut().enumerate()
                 {

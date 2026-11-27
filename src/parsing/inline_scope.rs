@@ -6186,13 +6186,13 @@ fn lower_sequence<'t>(
             }
             continue;
         }
-        if matches!(element, Element::Footnote(_)) {
+        if let Element::Footnote(reference) = &element {
             if matches!(run.last(), Some(Element::LineBreak))
                 && sequence_starts_with_repeated_list_marker(&output, &run)
             {
                 run.pop();
             }
-            if preserve_space_before_footnote {
+            if preserve_space_before_footnote || reference.preserve_preceding_space {
                 preserve_space_before_footnote = false;
             } else {
                 trim_one_trailing_text_space(&mut run);

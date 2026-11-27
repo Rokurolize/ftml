@@ -103,6 +103,30 @@ fn parse_fn<'r, 't>(
             .expect("parsed bibliography opener has closing brackets")
         + "]]".len();
 
+    if wikidot_candidate && wikidot_crossed_footnote_close(source, opener_end) {
+        let title = arguments.get("title");
+        let hide = arguments.get_bool(parser, "hide")?.unwrap_or(false);
+        let footnote = crate::tree::FootnoteRef::new(parser.push_footnote(Vec::new()));
+        let mut bibliography = Bibliography::new();
+        bibliography.add_residual(Element::Footnote(footnote));
+        bibliography.add_residual(text!(" "));
+        bibliography.add_residual(Element::FootnoteBlock {
+            title: None,
+            hide: false,
+            wikidot_wrappers: Vec::new(),
+            wikidot_inline_suffix: false,
+            wikidot_inline_prefix: false,
+            wikidot_tail_attached: false,
+        });
+        parser.set_footnote_block();
+        let index = parser.push_bibliography(bibliography);
+        while parser.current().token != Token::InputEnd && parser.step().is_ok() {}
+        return ok!(
+            Element::BibliographyBlock { index, title, hide },
+            Vec::new()
+        );
+    }
+
     if parser.settings().layout.legacy()
         && parser.in_footnote()
         && parser.wikidot_footnote_zone_blocks(opener_start)
@@ -119,18 +143,31 @@ fn parse_fn<'r, 't>(
             };
             elements.splice(0..0, Vec::from(container));
         }
+        let line_start = source[..opener_start]
+            .rfind('\n')
+            .map_or(0, |index| index + 1);
+        let quoted = source[line_start..opener_start]
+            .trim_end_matches([' ', '\t'])
+            .ends_with('>');
         elements.insert(0, Element::LineBreak);
         elements.insert(0, Element::Text(cow!(&source[opener_start..opener_end])));
+        if quoted && source[..opener_start].ends_with([' ', '\t']) {
+            elements.insert(0, text!(" "));
+        }
         if let Some(closer_start) = find_bibliography_closer(source, body_start) {
             let closer_end = closer_start + BIBLIOGRAPHY_CLOSER.len();
             let mut probe = parser.clone();
             while probe.current().span.start < closer_end && probe.step().is_ok() {}
             parser.update(&probe);
-            elements.push(Element::Container(Container::new(
-                ContainerType::Paragraph,
-                vec![Element::Text(cow!(&source[closer_start..closer_end]))],
-                AttributeMap::new(),
-            )));
+            if quoted {
+                elements.push(Element::Text(cow!(&source[closer_start..closer_end])));
+            } else {
+                elements.push(Element::Container(Container::new(
+                    ContainerType::Paragraph,
+                    vec![Element::Text(cow!(&source[closer_start..closer_end]))],
+                    AttributeMap::new(),
+                )));
+            }
         }
         return ok!(false; elements, errors);
     }
@@ -146,13 +183,29 @@ fn parse_fn<'r, 't>(
             elements.push(text!(" "));
         }
         elements.push(Element::Text(cow!(opener)));
-        if &source[opener_end..parser.current().span.start] == "\n" {
+        let separator = &source[opener_end..parser.current().span.start];
+        if separator == "\n"
+            || (!separator.is_empty()
+                && separator.chars().all(|ch| matches!(ch, ' ' | '\t')))
+        {
             elements.push(text!(" "));
         }
         return success_elements(elements);
     }
 
-    let title = arguments.get("title");
+    let title_explicit_empty = arguments.is_explicit_empty("title");
+    let title = arguments.get("title").map(|title| {
+        if wikidot_candidate
+            && (title_explicit_empty
+                || crate::parsing::rule::impls::contains_wikidot_code_token(&title))
+        {
+            Cow::Borrowed(crate::tree::WIKIDOT_EXPLICIT_EMPTY_LABEL_MARKER)
+        } else {
+            title
+        }
+    });
+    let title_token =
+        title.as_deref() == Some(crate::tree::WIKIDOT_EXPLICIT_EMPTY_LABEL_MARKER);
     let hide = arguments.get_bool(parser, "hide")?.unwrap_or(false);
 
     if wikidot_candidate && !parser.has_body_end_block(&BLOCK_BIBLIOGRAPHY) {
@@ -189,6 +242,9 @@ fn parse_fn<'r, 't>(
         .flatten();
 
     let mut bibliography = Bibliography::new();
+    if title_token {
+        bibliography.set_wikidot_empty_title(true);
+    }
     let mut in_residual = false;
     let mut seen_definition = false;
     let mut crossed_residual_inserted = false;
@@ -238,8 +294,8 @@ fn parse_fn<'r, 't>(
     if let Some(line) = footnote_tail {
         if !line.is_empty() {
             bibliography.add_residual(Element::Text(line));
-            bibliography.add_residual(text!(" "));
         }
+        bibliography.add_residual(text!(" "));
         bibliography.add_residual(Element::FootnoteBlock {
             title: None,
             hide: false,
@@ -452,6 +508,23 @@ fn wikidot_crossed_bibliography_residual<'t>(
     ])
 }
 
+fn wikidot_crossed_footnote_close(source: &str, opener_end: usize) -> bool {
+    const FOOTNOTE: &str = "[[footnote]]";
+    const BIBLIOGRAPHY_CLOSE: &str = "[[/bibliography]]";
+    const FOOTNOTE_CLOSE: &str = "[[/footnote]]";
+    let Some(rest) = source.get(opener_end..) else {
+        return false;
+    };
+    let Some(rest) = rest.strip_prefix(FOOTNOTE) else {
+        return false;
+    };
+    let Some(rest) = rest.strip_prefix(BIBLIOGRAPHY_CLOSE) else {
+        return false;
+    };
+    rest.trim_start_matches([' ', '\t'])
+        .starts_with(FOOTNOTE_CLOSE)
+}
+
 fn find_ascii_case_insensitive(haystack: &str, needle: &str) -> Option<usize> {
     haystack
         .as_bytes()
@@ -469,6 +542,27 @@ where
 {
     if !parser.settings().layout.legacy() || parser.discarding_hidden_body() {
         return None;
+    }
+    let mut probe = parser.clone();
+    if matches!(
+        probe.current().token,
+        Token::LineBreak | Token::ParagraphBreak
+    ) && probe.step().is_err()
+    {
+        return None;
+    }
+    if matches!(
+        probe.current().token,
+        Token::Quote | Token::BulletItem | Token::NumberedItem
+    ) {
+        while matches!(
+            probe.current().token,
+            Token::Quote | Token::BulletItem | Token::NumberedItem | Token::Whitespace
+        ) && probe.step().is_ok()
+        {}
+    }
+    if probe.current().token == Token::LeftBlockEnd {
+        parser.update(&probe);
     }
     if parser.current().token != Token::LeftBlockEnd {
         return None;

@@ -223,7 +223,12 @@ pub fn render_elements(ctx: &mut HtmlContext, elements: &[Element]) {
                             None => None,
                         };
 
-                    let title_arg = if title_ref.is_empty() {
+                    let title_arg = if title_ref
+                        == crate::tree::WIKIDOT_EXPLICIT_EMPTY_LABEL_MARKER
+                        || bibliography.wikidot_empty_title()
+                    {
+                        Some("")
+                    } else if title_ref.is_empty() {
                         None
                     } else {
                         Some(title_ref)

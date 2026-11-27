@@ -557,7 +557,13 @@ pub(super) fn substitute_for_layout(text: &mut String, wikidot: bool) {
         split_tight_quote_footnote_closers(&mut lines, &literal_lines);
         literal_lines = literal_line_mask(&lines);
     }
-    remove_tight_quote_lines(&mut lines, &literal_lines);
+    if wikidot {
+        let mut quote_lines = literal_lines.clone();
+        mark_footnote_first_body_lines(&lines, &mut quote_lines);
+        remove_tight_quote_lines(&mut lines, &quote_lines);
+    } else {
+        remove_tight_quote_lines(&mut lines, &literal_lines);
+    }
     canonicalize_root_collapsible_inline_quoted_closers(&mut lines, &literal_lines);
     if wikidot {
         split_div_collapsible_div_lines(&mut lines);
@@ -1500,6 +1506,22 @@ fn split_wikidot_quoted_div_footnote_closers(
         }
     }
     *lines = out;
+}
+
+fn mark_footnote_first_body_lines(lines: &[String], literal_lines: &mut [bool]) {
+    for index in 1..lines.len() {
+        let (body, _) = split_line(&lines[index]);
+        if !body.starts_with('>') || valid_quote_depth(body) > 0 {
+            continue;
+        }
+        let (previous, _) = split_line(&lines[index - 1]);
+        if previous
+            .trim_end_matches([' ', '\t'])
+            .ends_with(FOOTNOTE_HEAD)
+        {
+            literal_lines[index] = true;
+        }
+    }
 }
 
 fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {

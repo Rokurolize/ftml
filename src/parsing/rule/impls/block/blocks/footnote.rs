@@ -98,11 +98,22 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
 
     let body = parser.get_body_elements(&BLOCK_FOOTNOTE, true)?;
     if parser.settings().layout.legacy()
+        && wikidot_quote_close_tail_at(parser, opener_start)
+    {
+        while !matches!(
+            parser.current().token,
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+        ) && parser.step().is_ok()
+        {}
+    }
+    if parser.settings().layout.legacy()
         && wikidot_leave_enclosing_closer_for_parent(parser)?
     {
         wikidot_consume_pending_footnote_ref_closer(parser)?;
     }
     let fused_close = parser.wikidot_body_closed_with_fused_close(&BLOCK_FOOTNOTE);
+    let keep_swallowed_token_break = parser.settings().layout.legacy()
+        && wikidot_fused_close_swallowed_token(parser.full_text().inner(), opener_start);
     let (mut elements, errors, _) = body.into();
     let sole_dissolved_list_break = parser.settings().layout.legacy()
         && matches!(elements.as_slice(), [Element::LineBreak]);
@@ -134,6 +145,7 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     }
 
     if parser.settings().layout.legacy()
+        && !keep_swallowed_token_break
         && let Some(Element::Container(container)) = elements.last_mut()
         && container.ctype() == ContainerType::Paragraph
         && matches!(container.elements().last(), Some(Element::LineBreak))
@@ -149,10 +161,18 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         elements.pop();
     }
     if parser.settings().layout.legacy()
+        && !keep_swallowed_token_break
         && !sole_dissolved_list_break
         && matches!(elements.last(), Some(Element::LineBreak))
     {
         elements.pop();
+    }
+    if parser.settings().layout.legacy() {
+        restore_wikidot_footnote_first_body_line(
+            &mut elements,
+            parser.full_text().inner(),
+            opener_start,
+        );
     }
     if parser.settings().layout.legacy() {
         let repaired =
@@ -161,17 +181,39 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         let closer_marker = wikidot_footnote_closer_line_marker(parser);
         match closer_marker {
             Some(WikidotFootnoteCloserLine::List(marker)) => {
-                if matches!(elements.last(), Some(Element::List { .. })) {
+                let sole_marker = matches!(
+                    elements.as_slice(),
+                    [Element::Text(text)] if text.as_ref() == marker
+                ) && wikidot_empty_body_list_close(
+                    parser.full_text().inner(),
+                    opener_start,
+                );
+                if !sole_marker {
+                    if matches!(elements.last(), Some(Element::List { .. })) {
+                        elements.push(Element::Container(Container::new(
+                            ContainerType::Paragraph,
+                            vec![text!(marker)],
+                            AttributeMap::new(),
+                        )));
+                    } else if !elements.is_empty() {
+                        if !matches!(elements.last(), Some(Element::LineBreak)) {
+                            elements.push(Element::LineBreak);
+                        }
+                        elements.push(text!(marker));
+                    }
+                }
+            }
+            Some(WikidotFootnoteCloserLine::QuotedList(marker)) => {
+                if !elements.is_empty() {
                     elements.push(Element::Container(Container::new(
-                        ContainerType::Paragraph,
-                        vec![text!(marker)],
+                        ContainerType::Blockquote,
+                        vec![Element::Container(Container::new(
+                            ContainerType::Paragraph,
+                            vec![text!(marker)],
+                            AttributeMap::new(),
+                        ))],
                         AttributeMap::new(),
                     )));
-                } else if !elements.is_empty() {
-                    if !matches!(elements.last(), Some(Element::LineBreak)) {
-                        elements.push(Element::LineBreak);
-                    }
-                    elements.push(text!(marker));
                 }
             }
             Some(WikidotFootnoteCloserLine::Literal(marker)) => {
@@ -210,7 +252,34 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         }
     }
 
+    if parser.settings().layout.legacy()
+        && wikidot_footnote_in_bibliography(parser.full_text().inner(), opener_start)
+        && let Some(marker) =
+            wikidot_marked_bare_close(parser.full_text().inner(), opener_start)
+    {
+        while matches!(
+            elements.as_slice(),
+            [.., Element::LineBreak, Element::Text(text)] if text.as_ref() == marker
+        ) {
+            elements.truncate(elements.len() - 2);
+        }
+    }
+
+    if parser.settings().layout.legacy()
+        && !elements.is_empty()
+        && wikidot_footnote_trailing_empty_definition_term(
+            parser.full_text().inner(),
+            opener_start,
+        )
+    {
+        if !matches!(elements.last(), Some(Element::LineBreak)) {
+            elements.push(Element::LineBreak);
+        }
+        elements.push(text!(":"));
+    }
+
     if parser.settings().layout.legacy() {
+        restore_wikidot_footnote_continuation_break(&mut elements);
         bare_wikidot_footnote_spent_quote_tail(&mut elements);
         merge_wikidot_footnote_empty_div_tail(&mut elements);
         repair_wikidot_footnote_bibliography_marker_line(parser, &mut elements);
@@ -226,19 +295,27 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     if !row_tail.is_empty() {
         parser.set_footnote_row_tail(index, row_tail);
     }
+    let mut reference = crate::tree::FootnoteRef::new(index);
+    reference.preserve_preceding_space = parser.settings().layout.legacy()
+        && wikidot_token_space_precedes_footnote(
+            parser.full_text().inner(),
+            opener_start,
+        );
+    reference.drop_after_quote_close = parser.settings().layout.legacy()
+        && wikidot_footnote_follows_quote_close(parser.full_text().inner(), opener_start);
 
     if suppress_wikidot_body_reference {
         return ok!(false; Vec::new(), errors);
     }
     if !control_before_footnote {
         if fused_close {
-            return ok!(true; vec![Element::Footnote(index.into()), text!("]")], errors);
+            return ok!(true; vec![Element::Footnote(reference), text!("]")], errors);
         }
-        return ok!(Element::Footnote(index.into()), errors);
+        return ok!(Element::Footnote(reference), errors);
     }
     let mut reference_elements = vec![
         Element::Delayed(DelayedElement::wikidot_discarded_control_before_footnote()),
-        Element::Footnote(index.into()),
+        Element::Footnote(reference),
     ];
     if fused_close {
         reference_elements.push(text!("]"));
@@ -336,6 +413,227 @@ fn wikidot_unclosed_before_bibliography_closer(
     matches!((footnote_close, bibliography_close), (None, Some(_)))
 }
 
+fn wikidot_quote_close_tail_at(parser: &Parser<'_, '_>, opener_start: usize) -> bool {
+    let source = parser.full_text().inner();
+    let Some(before) = source.get(opener_start..parser.current().span.start) else {
+        return false;
+    };
+    let Some(closer) = before.rfind("[[/footnote]]") else {
+        return false;
+    };
+    let closer_end = opener_start + closer + "[[/footnote]]".len();
+    let Some(tail) = source.get(closer_end..parser.current().span.end) else {
+        return false;
+    };
+    if tail.is_empty()
+        || tail.contains(['\n', '\r'])
+        || tail.trim_start().starts_with("[[")
+    {
+        return false;
+    }
+    let line_start = source[..opener_start]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let opener_prefix = source[line_start..opener_start].trim_end_matches([' ', '\t']);
+    if !opener_prefix.ends_with('>') {
+        return false;
+    }
+    let close_line_start = source[..opener_start + closer]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let close_prefix =
+        source[close_line_start..opener_start + closer].trim_end_matches([' ', '\t']);
+    !close_prefix.is_empty() && close_prefix.chars().all(|ch| ch == '>')
+}
+
+fn wikidot_footnote_follows_quote_close(source: &str, opener_start: usize) -> bool {
+    const CLOSER: &str = "[[/footnote]]";
+    let Some(before) = source.get(..opener_start) else {
+        return false;
+    };
+    let trimmed = before.trim_end_matches([' ', '\t', '\n', '\r']);
+    let Some(prefix) = trimmed.strip_suffix(CLOSER) else {
+        return false;
+    };
+    let line_start = prefix.rfind('\n').map_or(0, |index| index + 1);
+    let line = prefix[line_start..].trim_end_matches([' ', '\t']);
+    if line.is_empty() || !line.chars().all(|ch| ch == '>') {
+        return false;
+    }
+    source[..line_start].contains("> [[footnote]]")
+}
+
+fn restore_wikidot_footnote_first_body_line(
+    elements: &mut Vec<Element<'_>>,
+    source: &str,
+    opener_start: usize,
+) {
+    let Some(line) = wikidot_footnote_first_body_line(source, opener_start) else {
+        return;
+    };
+    if line.contains("[[") {
+        return;
+    }
+    let quote_len = line.bytes().take_while(|byte| *byte == b'>').count();
+    if quote_len >= 2 {
+        let mut replacement = "»".repeat(quote_len / 2);
+        if quote_len % 2 == 1 {
+            replacement.push('>');
+        }
+        if let Some(Element::Text(text)) = elements.first_mut()
+            && text
+                .as_ref()
+                .bytes()
+                .take_while(|byte| *byte == b'>')
+                .count()
+                == quote_len
+        {
+            let tail = text[quote_len..].to_string();
+            *text = Cow::Owned(format!("{replacement}{tail}"));
+        }
+    } else if quote_len == 1 && elements.is_empty() {
+        elements.push(Element::Text(Cow::Owned(line.to_owned())));
+    } else if line.starts_with("= ")
+        && line.len() > 2
+        && !matches!(elements.first(), Some(Element::Text(text)) if text.as_ref() == "= ")
+    {
+        elements.insert(0, text!("= "));
+    }
+}
+
+fn wikidot_footnote_first_body_line(source: &str, opener_start: usize) -> Option<&str> {
+    let offset = source.get(opener_start..)?.find("]]")?;
+    let opener_end = opener_start + offset + 2;
+    let rest = source.get(opener_end..)?;
+    let rest = rest
+        .strip_prefix('\n')
+        .or_else(|| rest.strip_prefix("\r\n"))?;
+    let end = rest.find('\n').unwrap_or(rest.len());
+    Some(rest[..end].trim_end_matches('\r'))
+}
+
+fn restore_wikidot_footnote_continuation_break(elements: &mut Vec<Element<'_>>) {
+    for index in 1..elements.len().saturating_sub(3) {
+        let matches_shape = matches!(
+            &elements[index..index + 4],
+            [
+                Element::Text(first),
+                Element::Text(second),
+                Element::Text(space),
+                Element::Collapsible { .. },
+            ] if first.as_ref() == ":" && second.as_ref() == ":" && space.as_ref() == " "
+        );
+        if matches_shape {
+            elements.insert(index, Element::LineBreak);
+            return;
+        }
+    }
+}
+
+fn wikidot_footnote_in_bibliography(source: &str, opener_start: usize) -> bool {
+    const BIBLIOGRAPHY_OPEN: &str = "[[bibliography]]";
+    let Some(before) = source.get(..opener_start) else {
+        return false;
+    };
+    let Some(open) = before.rfind(BIBLIOGRAPHY_OPEN) else {
+        return false;
+    };
+    source[open + BIBLIOGRAPHY_OPEN.len()..].starts_with("[[footnote]]")
+}
+
+fn wikidot_marked_bare_close(source: &str, opener_start: usize) -> Option<&'static str> {
+    let rest = source.get(opener_start..)?;
+    let closer = rest.find("[[/footnote]]")?;
+    let prefix = &rest[..closer];
+    let line_start = prefix.rfind('\n').map_or(0, |index| index + 1);
+    let line = prefix[line_start..].trim_end_matches([' ', '\t']);
+    if !line.is_empty() && line.chars().all(|ch| ch == '>') {
+        return Some(">");
+    }
+    if line == "*" {
+        return Some("*");
+    }
+    if line == "#" {
+        return Some("#");
+    }
+    None
+}
+
+fn wikidot_empty_body_list_close(source: &str, opener_start: usize) -> bool {
+    const OPENER: &str = "[[footnote]]";
+    let Some(closer) = source
+        .get(opener_start..)
+        .and_then(|rest| rest.find("[[/footnote]]"))
+    else {
+        return false;
+    };
+    let Some(body) = source.get(opener_start + OPENER.len()..opener_start + closer)
+    else {
+        return false;
+    };
+    body.matches('\n').count() == 1 && (body.trim() == "*" || body.trim() == "#")
+}
+
+fn wikidot_footnote_trailing_empty_definition_term(
+    source: &str,
+    opener_start: usize,
+) -> bool {
+    let Some(closer) = source[opener_start..].find("[[/footnote]]") else {
+        return false;
+    };
+    let prefix = &source[opener_start..opener_start + closer];
+    let Some(prefix) = prefix.strip_suffix('\n') else {
+        return false;
+    };
+    let line_start = prefix.rfind('\n').map_or(0, |index| index + 1);
+    let line = &prefix[line_start..];
+    if line.is_empty() || line.as_bytes()[0] != b':' || line[1..].contains(':') {
+        return false;
+    }
+    line.len() > 1 && line[1..].chars().all(|ch| matches!(ch, ' ' | '\t'))
+}
+
+fn wikidot_fused_close_swallowed_token(source: &str, opener_start: usize) -> bool {
+    let Some(before) = source.get(opener_start..) else {
+        return false;
+    };
+    let Some(closer) = before.find("[[/footnote]]") else {
+        return false;
+    };
+    let prefix = &before[..closer];
+    let line_start = prefix.rfind('\n').map_or(0, |index| index + 1);
+    if line_start == 0 {
+        return false;
+    }
+    let line = &prefix[line_start..];
+    let Some(marker) = line.as_bytes().first() else {
+        return false;
+    };
+    matches!(marker, b'_' | b'*' | b'@')
+        && line.len() == 4
+        && line.bytes().all(|byte| byte == *marker)
+}
+
+fn wikidot_token_space_precedes_footnote(source: &str, opener_start: usize) -> bool {
+    let Some(before) = source.get(..opener_start) else {
+        return false;
+    };
+    let token = before.trim_end_matches([' ', '\t']);
+    for (opener, closer) in [("{{", "}}"), ("``", "``")] {
+        let Some(rest) = token.strip_suffix(closer) else {
+            continue;
+        };
+        let Some(start) = rest.rfind(opener) else {
+            continue;
+        };
+        let inner = &rest[start + opener.len()..];
+        if !inner.is_empty() && inner.chars().all(|ch| matches!(ch, ' ' | '\t')) {
+            return true;
+        }
+    }
+    false
+}
+
 fn wikidot_leave_enclosing_closer_for_parent<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<bool, ParseError>
@@ -388,6 +686,7 @@ where
 
 enum WikidotFootnoteCloserLine<'t> {
     List(&'static str),
+    QuotedList(&'static str),
     Literal(Cow<'t, str>),
     HorizontalRule,
     ContentSeparator,
@@ -453,6 +752,13 @@ fn wikidot_footnote_closer_line_marker<'r, 't>(
         let spaced_marker_only = raw_prefix.len() != prefix.len()
             && !prefix.is_empty()
             && prefix.chars().all(|ch| ch == '>');
+        let after_quote = prefix[quote_len..].trim_start_matches([' ', '\t']);
+        if after_quote == "*" {
+            return Some(WikidotFootnoteCloserLine::QuotedList("*"));
+        }
+        if after_quote == "#" {
+            return Some(WikidotFootnoteCloserLine::QuotedList("#"));
+        }
         if (tight && !spaced_marker_only) || prefix.contains("[[/div]]") {
             return Some(WikidotFootnoteCloserLine::Suppressed);
         }

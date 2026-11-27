@@ -1,0 +1,27 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "blockquote",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "x"
+                    },
+                    {
+                        "element": "table-of-contents",
+                        "data": {
+                            "attributes": {},
+                            "align": null
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    }
+                ]
+            }
+        }
+    ]
+}

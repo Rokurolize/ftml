@@ -1444,6 +1444,34 @@ fn quoted_list_item_holds_only_this_div(
     })
 }
 
+fn wikidot_div_head_has_unquoted_raw(source: &str, start: usize, end: usize) -> bool {
+    let Some(head) = source.get(start..end) else {
+        return false;
+    };
+    let bytes = head.as_bytes();
+    let mut index = 0;
+    let mut in_quote = false;
+    while index < bytes.len() {
+        if bytes[index] == b'"' {
+            in_quote = !in_quote;
+            index += 1;
+            continue;
+        }
+        if !in_quote && bytes[index..].starts_with(b"[!--") {
+            if let Some(close) = head[index + 4..].find("--]") {
+                index += close + 7;
+                continue;
+            }
+            return false;
+        }
+        if !in_quote && bytes[index..].starts_with(b"@@") {
+            return true;
+        }
+        index += 1;
+    }
+    false
+}
+
 fn wikidot_div_close_was_on_centered_line(parser: &Parser<'_, '_>) -> bool {
     const CLOSE: &str = "[[/div]]";
 
@@ -1516,6 +1544,12 @@ fn parse_fn<'r, 't>(
         && matches!(source_bytes[head_end - 1], b' ' | b'\t' | b'\r' | b'\n')
     {
         head_end -= 1;
+    }
+    if parser.settings().layout.legacy()
+        && !flag_score
+        && wikidot_div_head_has_unquoted_raw(source, opener_start, head_end)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
     if parser.settings().layout.legacy() && body_start == BlockBodyStart::Inline {
         body_start = skip_trailing_head_space(parser, body_start)?;

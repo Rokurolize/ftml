@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::clear_wikidot_space_only_fused_open;
 use super::gallery::authored_gallery_line_offset;
 use super::prelude::*;
 use super::span::wikidot_literal_with_empty_scored_spans_elided;
@@ -53,8 +54,12 @@ fn parse_fn<'r, 't>(
         }
     }
 
-    let (arguments, body_start) =
+    let (mut arguments, body_start) =
         parser.get_head_map_with_body_start_wikidot(&BLOCK_HTML, in_head)?;
+    if parser.settings().layout.legacy() {
+        clear_wikidot_space_only_fused_open(parser, opener_start, name)?;
+        scan_wikidot_html_class_style(parser, opener_start, name, &mut arguments);
+    }
     if parser.settings().layout.legacy() && arguments.has_source() && arguments.is_empty()
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
@@ -130,7 +135,84 @@ fn parse_fn<'r, 't>(
         attributes: arguments.to_attribute_map(parser.settings()),
     };
     parser.push_html_block(stored_html);
+    if parser.settings().layout.legacy()
+        && element_contents_empty(&element)
+        && opener_start > 0
+        && parser.full_text().inner()[..opener_start].ends_with('\n')
+    {
+        return success_elements_with_paragraph_safety(
+            true,
+            vec![Element::LineBreak, element],
+            Vec::new(),
+        );
+    }
     ok!(parser.settings().layout.legacy(); element)
+}
+
+fn element_contents_empty(element: &Element<'_>) -> bool {
+    matches!(element, Element::Html { contents, .. } if contents.is_empty())
+}
+
+fn strip_wikidot_html_attribute_comments<'t>(value: &'t str) -> Cow<'t, str> {
+    if !value.contains("[!--") {
+        return Cow::Borrowed(value);
+    }
+    let mut stripped = String::new();
+    let mut rest = value;
+    while let Some(start) = rest.find("[!--") {
+        stripped.push_str(&rest[..start]);
+        let after_start = &rest[start + 4..];
+        match after_start.find("--]") {
+            Some(end) => rest = &after_start[end + 3..],
+            None => {
+                stripped.push_str(&rest[start..]);
+                rest = "";
+                break;
+            }
+        }
+    }
+    stripped.push_str(rest);
+    Cow::Owned(stripped)
+}
+
+fn scan_wikidot_html_class_style<'t>(
+    parser: &Parser<'_, 't>,
+    opener_start: usize,
+    name: &str,
+    arguments: &mut Arguments<'t>,
+) {
+    let source = parser.full_text().inner();
+    let head_start = opener_start + 2 + name.len();
+    let head_end = parser.current().span.start;
+    let Some(head) = source.get(head_start..head_end) else {
+        return;
+    };
+    let bytes = head.as_bytes();
+    for key in ["class", "style"] {
+        let key_bytes = key.as_bytes();
+        let mut cursor = 0;
+        while cursor + key_bytes.len() + 2 <= bytes.len() {
+            let boundary =
+                cursor == 0 || matches!(bytes[cursor - 1], b' ' | b'\t' | b'\r' | b'\n');
+            if boundary
+                && bytes[cursor..cursor + key_bytes.len()].eq_ignore_ascii_case(key_bytes)
+                && bytes[cursor + key_bytes.len()] == b'='
+                && bytes[cursor + key_bytes.len() + 1] == b'"'
+            {
+                let value_start = cursor + key_bytes.len() + 2;
+                let Some(relative_end) = head[value_start..].find('"') else {
+                    break;
+                };
+                let value_end = value_start + relative_end;
+                let value =
+                    strip_wikidot_html_attribute_comments(&head[value_start..value_end]);
+                arguments.insert(key, value);
+                cursor = value_end + 1;
+            } else {
+                cursor += 1;
+            }
+        }
+    }
 }
 
 fn literal_elements<'t>(source: &'t str) -> Elements<'t> {

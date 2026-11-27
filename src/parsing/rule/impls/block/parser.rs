@@ -987,6 +987,31 @@ fn wikidot_collapsible_drop_head_footnote_shadowed_attributes<'t>(
     }
 }
 
+fn consume_wikidot_head_raw(parser: &mut Parser<'_, '_>) -> Result<bool, ParseError> {
+    let close = match parser.current().token {
+        Token::Raw => Token::Raw,
+        Token::LeftRaw => Token::RightRaw,
+        _ => return Ok(false),
+    };
+    let mut scan = parser.clone();
+    scan.step()?;
+    loop {
+        match scan.current().token {
+            token if token == close => {
+                scan.step()?;
+                parser.update(&scan);
+                return Ok(true);
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                return Ok(false);
+            }
+            _ => {
+                scan.step()?;
+            }
+        }
+    }
+}
+
 fn wikidot_head_scan(block_rule: &BlockRule) -> WikidotHeadScan {
     match block_rule.name() {
         "block-div" => WikidotHeadScan::LineEndGreedy,
@@ -11235,6 +11260,10 @@ where
                     let current = self.current();
                     if current.token == Token::InputEnd {
                         break;
+                    }
+
+                    if !raw_head && consume_wikidot_head_raw(self)? {
+                        continue;
                     }
 
                     if !same_line {

@@ -18,6 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+use super::clear_wikidot_space_only_fused_open;
 use super::prelude::*;
 use crate::parsing::inline_scope::{
     WIKIDOT_SCORE_ANCHOR_ATTRIBUTE, WIKIDOT_SCORE_ANCHOR_UNWRAPPED_ATTRIBUTE,
@@ -49,6 +50,12 @@ fn parse_fn<'r, 't>(
     }
 
     let arguments = parser.get_head_map_wikidot(&BLOCK_ANCHOR, in_head)?;
+    if parser.settings().layout.legacy()
+        && parser.fused_name_residual().is_some()
+        && clear_wikidot_space_only_fused_open(parser, opener_start, name)?
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     if parser.settings().layout.legacy() && !parser.has_body_end_block(&BLOCK_ANCHOR) {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }

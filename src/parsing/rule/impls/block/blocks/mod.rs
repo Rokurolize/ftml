@@ -75,6 +75,43 @@ mod prelude {
     pub(crate) use crate::parsing::trim_cow;
 }
 
+pub(crate) fn clear_wikidot_space_only_fused_open<'r, 't>(
+    parser: &mut Parser<'r, 't>,
+    opener_start: usize,
+    name: &str,
+) -> Result<bool, ParseError>
+where
+    'r: 't,
+{
+    let Some(position) = parser.fused_name_residual() else {
+        return Ok(false);
+    };
+    let Some(close_start) = position.checked_sub(3) else {
+        return Ok(false);
+    };
+    let head_start = opener_start + 2 + name.len();
+    let source = parser.full_text().inner();
+    let Some(head) = source.get(head_start..close_start) else {
+        return Ok(false);
+    };
+    if head.is_empty() || !head.bytes().all(|byte| matches!(byte, b' ' | b'\t')) {
+        return Ok(false);
+    }
+    let close_len = source[position - 3..]
+        .bytes()
+        .take_while(|byte| *byte == b']')
+        .count();
+    let end = position - 3 + close_len;
+    parser.clear_fused_name_residual();
+    while parser.current().span.start < end {
+        if parser.current().token == Token::InputEnd {
+            break;
+        }
+        parser.step()?;
+    }
+    Ok(true)
+}
+
 /// Closed bullet anchor item live emits for a swallowed crossed ol tail before
 /// a keep-class block follower (BRIEF-RMRES u2r-ol closed rows).
 pub(crate) fn wikidot_crossed_ol_tail_element<'t>() -> Element<'t> {

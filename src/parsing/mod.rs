@@ -448,6 +448,137 @@ fn repair_bracket_run_tokenization<'t>(
     let mut head_gate = BracketRunHeadGate::default();
     let mut name_gate = BracketRunNameGate::default();
     while index + 1 < tokens.len() {
+        let split_fused_open = tokens[index].token == Token::LeftBlock
+            && tokens.get(index + 1).is_some_and(|token| {
+                token.token == Token::Identifier
+                    && token.span.start == tokens[index].span.end
+                    && bracket_run_space_fused_open_may_match(
+                        token.slice,
+                        settings.layout,
+                    )
+            })
+            && tokens
+                .get(index + 2)
+                .is_some_and(|token| token.token == Token::Whitespace)
+            && tokens.get(index + 3).is_some_and(|token| {
+                token.token == Token::RightBlock && token.span.end - token.span.start == 2
+            })
+            && tokens.get(index + 4).is_some_and(|token| {
+                token.slice == "]"
+                    && token.span.start == tokens[index + 3].span.end
+                    && token.span.end - token.span.start == 1
+            });
+        if split_fused_open {
+            let start = tokens[index + 3].span.start;
+            let mut candidate = tokens.clone();
+            candidate.splice(
+                index + 3..index + 5,
+                [ExtractedToken {
+                    token: Token::RightLink,
+                    slice: &source[start..start + 3],
+                    span: start..start + 3,
+                }],
+            );
+            tokens = candidate;
+            repaired = true;
+            index += 4;
+            head_gate.reset(index);
+            name_gate.reset();
+            continue;
+        }
+        let fused_block_open = tokens[index].token == Token::LeftBlock
+            && tokens.get(index + 1).is_some_and(|token| {
+                token.token == Token::Identifier
+                    && token.span.start == tokens[index].span.end
+                    && bracket_run_math_fused_open_may_match(token.slice, settings.layout)
+            })
+            && tokens.get(index + 2).is_some_and(|token| {
+                token.token == Token::RightLink
+                    && token.span.start == tokens[index + 1].span.end
+                    && token.span.end - token.span.start == 3
+            });
+        if fused_block_open {
+            let start = tokens[index + 2].span.start;
+            let token_at = |token: Token, span: std::ops::Range<usize>| ExtractedToken {
+                token,
+                slice: &source[span.clone()],
+                span,
+            };
+            let mut candidate = tokens.clone();
+            candidate.splice(
+                index + 2..index + 3,
+                [
+                    token_at(Token::RightBlock, start..start + 2),
+                    token_at(Token::RightBracket, start + 2..start + 3),
+                ],
+            );
+            tokens = candidate;
+            repaired = true;
+            index += 3;
+            head_gate.reset(index);
+            name_gate.reset();
+            continue;
+        }
+        let close_run_end = if tokens[index].token == Token::LeftLink
+            && tokens[index].span.end - tokens[index].span.start == 3
+            && tokens.get(index + 1).is_some_and(|token| {
+                token.token == Token::Other
+                    && token.slice == "/"
+                    && token.span.start == tokens[index].span.end
+            }) {
+            let mut cursor = index + 2;
+            let mut name = String::new();
+            while let Some(token) = tokens.get(cursor) {
+                match token.token {
+                    Token::RightBlock => break,
+                    Token::Whitespace
+                    | Token::LineBreak
+                    | Token::ParagraphBreak
+                    | Token::InputEnd => {
+                        name.clear();
+                        break;
+                    }
+                    _ => {
+                        name.push_str(token.slice);
+                        cursor += 1;
+                    }
+                }
+            }
+            if !name.is_empty()
+                && tokens
+                    .get(cursor)
+                    .is_some_and(|token| token.token == Token::RightBlock)
+                && bracket_run_lookup_may_match(&name, settings.layout)
+            {
+                Some(cursor)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        if close_run_end.is_some() {
+            let start = tokens[index].span.start;
+            let token_at = |token: Token, span: std::ops::Range<usize>| ExtractedToken {
+                token,
+                slice: &source[span.clone()],
+                span,
+            };
+            let mut candidate = tokens.clone();
+            candidate.splice(
+                index..index + 2,
+                [
+                    token_at(Token::LeftBracket, start..start + 1),
+                    token_at(Token::LeftBlockEnd, start + 1..start + 4),
+                ],
+            );
+            tokens = candidate;
+            repaired = true;
+            index += 2;
+            head_gate.reset(index);
+            name_gate.reset();
+            continue;
+        }
         let comment_head = tokens[index].token == Token::LeftLink
             && tokens[index].span.end - tokens[index].span.start == 3
             && source[tokens[index].span.start..].starts_with("[[[!--")
@@ -678,6 +809,23 @@ struct BracketRunNameStretch {
     window_end: usize,
     skipped_comment: bool,
     first_letter: Option<usize>,
+}
+
+fn bracket_run_space_fused_open_may_match(
+    name: &str,
+    layout: crate::layout::Layout,
+) -> bool {
+    layout.legacy()
+        && ["html", "span", "a"]
+            .iter()
+            .any(|block| name.eq_ignore_ascii_case(block))
+}
+
+fn bracket_run_math_fused_open_may_match(
+    name: &str,
+    layout: crate::layout::Layout,
+) -> bool {
+    layout.legacy() && name.eq_ignore_ascii_case("math")
 }
 
 fn bracket_run_lookup_may_match(name: &str, layout: crate::layout::Layout) -> bool {

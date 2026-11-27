@@ -24,7 +24,7 @@ use super::inline_delimiter::{
 };
 use super::prelude::*;
 use crate::parsing::inline_format::{element_contains_link, monospace_close_split};
-use crate::tree::{Container, WIKIDOT_WS_MONO_VANISH_MARKER};
+use crate::tree::{Container, PartialElement, WIKIDOT_WS_MONO_VANISH_MARKER};
 use std::borrow::Cow;
 
 pub const RULE_MONOSPACE: Rule = Rule {
@@ -69,6 +69,12 @@ fn try_consume_fn<'r, 't>(
                         Vec::new(),
                         attributes,
                     )));
+                }
+                if parser.settings().layout.legacy() {
+                    return ok!(Elements::Multiple(vec![
+                        text!(" "),
+                        Element::Partial(PartialElement::WikidotEmptyInlineOwner),
+                    ]));
                 }
                 return success_elements(text!(" "));
             }

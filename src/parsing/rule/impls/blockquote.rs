@@ -55,6 +55,7 @@ struct NativeQuoteRow<'t> {
     /// came from a quoted-depth item close (BL57c): live wraps it in a
     /// paragraph (ulclose-y), unlike the unquoted/v2 follower.
     quoted_close_paragraph_follower: bool,
+    retained_empty_quote: bool,
 }
 
 struct QuoteFlatSplit<'t> {
@@ -976,6 +977,7 @@ fn try_consume_fn<'r, 't>(
                         marker_final: false,
                         residual_block: false,
                         quoted_close_paragraph_follower: false,
+                        retained_empty_quote: false,
                     },
                 ));
             } else {
@@ -1083,6 +1085,7 @@ fn try_consume_fn<'r, 't>(
                         marker_final: false,
                         residual_block: false,
                         quoted_close_paragraph_follower: false,
+                        retained_empty_quote: false,
                     },
                 ));
             }
@@ -1319,6 +1322,10 @@ fn try_consume_fn<'r, 't>(
                                 0x01..=0x08 | 0x0e..=0x1a | 0x1c..=0x1f)
                         })
                 });
+        let empty_list_marker_boundary = parser.take_wikidot_empty_list_marker_boundary();
+        let retained_empty_quote = parser.settings().layout.legacy()
+            && empty_list_marker_boundary
+            && elements.is_empty();
         let row_is_empty = elements.is_empty()
             && errors.len() == errors_before
             && !complete_empty_raw_line
@@ -1438,7 +1445,10 @@ fn try_consume_fn<'r, 't>(
         }
         let empty_spaced_row =
             row_is_empty && spaced_after_marker && single_space_after_marker;
-        if row_is_empty && (consumed_past_line || !spaced_after_marker) {
+        if row_is_empty
+            && !retained_empty_quote
+            && (consumed_past_line || !spaced_after_marker)
+        {
             consumed_pruned_row = true;
             continue;
         }
@@ -1650,6 +1660,7 @@ fn try_consume_fn<'r, 't>(
                         marker_final: false,
                         residual_block: false,
                         quoted_close_paragraph_follower: false,
+                        retained_empty_quote: false,
                     },
                 ));
             }
@@ -1694,6 +1705,7 @@ fn try_consume_fn<'r, 't>(
                     marker_final: false,
                     residual_block: false,
                     quoted_close_paragraph_follower: false,
+                    retained_empty_quote: false,
                 },
             ));
             push_quote_row_units(
@@ -1827,6 +1839,7 @@ fn try_consume_fn<'r, 't>(
             marker_final,
             residual_block,
             quoted_close_paragraph_follower,
+            retained_empty_quote,
         };
         if flatten_following_rows {
             escaped_rows.push(row);
@@ -2090,6 +2103,7 @@ fn push_quote_row_units<'t>(
             marker_final: false,
             residual_block: false,
             quoted_close_paragraph_follower: false,
+            retained_empty_quote: false,
         };
         if flatten {
             escaped_rows.push(row);
@@ -2359,11 +2373,13 @@ fn build_blockquote_element(
     let mut residual_chunk = false;
     let mut open_quote_anchor = false;
     let mut blank_after_open_anchor = false;
+    let mut has_retained_empty_quote = false;
     for item in list {
         match item {
             DepthItem::Item(mut row) => {
                 keep_trailing_break = row.keep_trailing_break;
                 marker_final = row.marker_final;
+                has_retained_empty_quote |= row.retained_empty_quote;
                 residual_chunk |= row.residual_block
                     || row_has_residual_div(&row)
                     || row_has_residual_list(&row);
@@ -2439,6 +2455,18 @@ fn build_blockquote_element(
         }
     }
     if elements.is_empty() {
+        if wikidot && has_retained_empty_quote {
+            let mut attributes = AttributeMap::new();
+            attributes.insert(
+                crate::tree::WIKIDOT_EMPTY_QUOTE_MARKER,
+                std::borrow::Cow::Borrowed(""),
+            );
+            return Some(Element::Container(Container::new(
+                ContainerType::Blockquote,
+                Vec::new(),
+                attributes,
+            )));
+        }
         return None;
     }
 

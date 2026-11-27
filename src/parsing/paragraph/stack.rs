@@ -967,6 +967,20 @@ impl<'t> ParagraphStack<'t> {
     #[inline]
     pub fn mark_wikidot_terminal_backslash(&mut self) {
         if self.wikidot && !self.current.is_empty() && !self.current_unwrapped {
+            let only_whitespace_and_break =
+                self.current.iter().all(|element| match element {
+                    Element::LineBreak => true,
+                    Element::Text(text) => {
+                        text.chars().all(|ch| ch.is_ascii_whitespace())
+                    }
+                    _ => false,
+                });
+            if only_whitespace_and_break {
+                self.current
+                    .retain(|element| *element == Element::LineBreak);
+                self.current_unwrapped = true;
+                return;
+            }
             let separator = if self.finished.is_empty() {
                 "\n\n"
             } else {

@@ -2852,7 +2852,12 @@ fn try_consume_comma_run_subscript<'r, 't>(
                 parser.mark_wikidot_vanished_pair_line();
             }
             return Ok(ParseSuccess::new(
-                Some((Elements::None, true)),
+                Some((
+                    Elements::Single(Element::Partial(
+                        PartialElement::WikidotEmptyInlineOwner,
+                    )),
+                    true,
+                )),
                 Vec::new(),
                 true,
             ));

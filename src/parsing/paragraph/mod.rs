@@ -812,14 +812,23 @@ where
                     }
                     if comment
                         && parser.settings().layout.legacy()
-                        && stack.current_empty()
                         && (comment_started_line || line_prefix_whitespace_only)
                     {
                         let window = TokenWindow::at(parser);
-                        if wikidot_comment_chain_occupied(window, 0)
-                            .is_some_and(|end| !wikidot_footnote_opener_at(window, end))
+                        let spaced_prefix =
+                            !comment_started_line && line_prefix_whitespace_only;
+                        let occ = wikidot_comment_chain_occupied_with_prefix(
+                            window,
+                            0,
+                            spaced_prefix,
+                        );
+                        if occ.is_some_and(|end| !wikidot_footnote_opener_at(window, end))
                         {
-                            stack.mark_wikidot_invisible_line_occupancy();
+                            if spaced_prefix && !stack.current_empty() {
+                                stack.mark_control_only_line();
+                            } else if stack.current_empty() {
+                                stack.mark_wikidot_invisible_line_occupancy();
+                            }
                         }
                     }
                     if parser.settings().layout.legacy()
@@ -1250,7 +1259,7 @@ where
         }
 
         match iteration_token {
-            Token::LineBreak | Token::ParagraphBreak => {
+            Token::InputStart | Token::LineBreak | Token::ParagraphBreak => {
                 line_prefix_whitespace_only = true;
             }
             Token::Whitespace
@@ -2047,9 +2056,17 @@ fn wikidot_empty_raw_line_kind(
 
 fn wikidot_comment_chain_occupied(
     window: TokenWindow<'_, '_>,
-    mut index: usize,
+    index: usize,
 ) -> Option<usize> {
-    let mut saw_whitespace = false;
+    wikidot_comment_chain_occupied_with_prefix(window, index, false)
+}
+
+fn wikidot_comment_chain_occupied_with_prefix(
+    window: TokenWindow<'_, '_>,
+    mut index: usize,
+    spaced_prefix: bool,
+) -> Option<usize> {
+    let mut saw_whitespace = spaced_prefix;
     loop {
         if !matches!(
             window.get(index),

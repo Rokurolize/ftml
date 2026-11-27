@@ -505,7 +505,7 @@ fn leading_comment_remains_an_owner_barrier(
     }
     if !source[line_start..open]
         .bytes()
-        .all(|byte| matches!(byte, b' ' | b'\t'))
+        .all(|byte| matches!(byte, b' ' | b'\t' | b'\0'))
     {
         return false;
     }

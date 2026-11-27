@@ -27,6 +27,7 @@ use std::mem;
 const MAX_ACTIVE_INLINE_SCOPES: usize = 101;
 pub(super) const WIKIDOT_SCORE_SPAN_UNWRAPPED_ATTRIBUTE: &str =
     "data-ftml-score-span-own-line";
+const WIKIDOT_RETAIN_EMPTY_SPAN_MARKER: &str = "data-ftml-retain-empty-span";
 pub(super) const WIKIDOT_SCORE_ANCHOR_ATTRIBUTE: &str = "data-ftml-score-anchor";
 pub(super) const WIKIDOT_SCORE_ANCHOR_UNWRAPPED_ATTRIBUTE: &str =
     "data-ftml-score-anchor-own-line";
@@ -149,6 +150,7 @@ struct ActiveScope<'t> {
     /// elements only after parsing, so until then it blocks a leading space from
     /// moving out of this scope.
     empty_first_child: bool,
+    had_leading_space: bool,
     pending: bool,
     materialized: bool,
     origin: usize,
@@ -262,6 +264,7 @@ impl<'t> ActiveScopes<'t> {
             scored,
             has_content: false,
             empty_first_child: false,
+            had_leading_space: false,
             pending: false,
             materialized: false,
             origin,
@@ -4248,6 +4251,8 @@ struct SequenceEffects {
     /// The sequence ends with a scored span: one closed here and nothing
     /// followed it.
     scored_span_at_end: bool,
+    /// The sequence consumed a `WikidotEmptyInlineOwner` partial.
+    saw_empty_inline_owner: bool,
 }
 
 struct ParagraphGroup<'t> {
@@ -4777,6 +4782,11 @@ fn lower_root_sequence<'t>(
                 ends_at_advanced_table: false,
             });
             group.elements.append(container.elements_mut());
+            if effects.saw_empty_inline_owner && group.elements.is_empty() {
+                group
+                    .attributes
+                    .insert(WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER, Cow::Borrowed(""));
+            }
             group.ends_with_scored_span = effects.scored_span_at_end;
             previous_scored_close = effects.scored_span_at_end;
             previous_heading_collapsible_tail =
@@ -6074,6 +6084,7 @@ fn lower_sequence<'t>(
             element,
             Element::Partial(PartialElement::WikidotEmptyInlineOwner)
         ) {
+            effects.saw_empty_inline_owner = true;
             preserve_space_before_footnote =
                 matches!(source.peek(), Some(Element::Footnote(_)))
                     && sequence_starts_with_repeated_list_marker(&output, &run)
@@ -6262,6 +6273,9 @@ fn lower_sequence<'t>(
                     },
                     scored,
                 );
+                if leading_space && let Some(tail) = active.active_tail {
+                    active.scopes[tail].had_leading_space = true;
+                }
                 active.record_open_instance(current);
                 if scored {
                     effects.scored_span_opened_at_start |= at_start;
@@ -6300,12 +6314,25 @@ fn lower_sequence<'t>(
                 .is_some_and(|position| active.scope_has_content(position))
                 && run.is_empty();
             let empty_id_attributes = if empty && !scored {
-                resolved.and_then(|position| match &active.scopes[position].wrapper {
-                    ScopeWrapper::Container {
-                        ctype: ContainerType::Span,
-                        attributes,
-                    } if attributes.get().contains_key("id") => Some(attributes.clone()),
-                    _ => None,
+                resolved.and_then(|position| {
+                    let scope = &active.scopes[position];
+                    match &scope.wrapper {
+                        ScopeWrapper::Container {
+                            ctype: ContainerType::Span,
+                            attributes,
+                        } if scope.origin == position
+                            && !scope.had_leading_space
+                            && !attributes.is_effectively_empty() =>
+                        {
+                            let mut attributes = attributes.clone();
+                            attributes.insert(
+                                WIKIDOT_RETAIN_EMPTY_SPAN_MARKER,
+                                Cow::Borrowed(""),
+                            );
+                            Some(attributes)
+                        }
+                        _ => None,
+                    }
                 })
             } else {
                 None
@@ -7555,7 +7582,11 @@ fn empty_inline_scope_vanishes(element: &Element<'_>) -> bool {
             is_inline_scope_ctype(container.ctype())
                 && elements_render_empty(container.elements())
                 && !(container.ctype() == ContainerType::Span
-                    && container.attributes().get().contains_key("id"))
+                    && (container.attributes().get().contains_key("id")
+                        || container
+                            .attributes()
+                            .get()
+                            .contains_key(WIKIDOT_RETAIN_EMPTY_SPAN_MARKER)))
         }
         Element::Color { elements, .. } => elements_render_empty(elements),
         _ => false,
@@ -7768,6 +7799,7 @@ fn drop_vanished_paragraphs(elements: &mut Vec<Element>) {
         visit_children_mut(element, &mut |children| drop_vanished_paragraphs(children));
         if let Element::List { items, .. } = element {
             items.retain(|item| !vanished_list_item(item));
+            strip_control_only_list_item_markers(items);
         }
     }
     elements.retain(|element| !vanished_block(element));
@@ -7776,6 +7808,24 @@ fn drop_vanished_paragraphs(elements: &mut Vec<Element>) {
             container
                 .attributes_mut()
                 .remove(WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER);
+            container
+                .attributes_mut()
+                .remove(WIKIDOT_RETAIN_EMPTY_SPAN_MARKER);
+        }
+    }
+}
+
+fn strip_control_only_list_item_markers(items: &mut [ListItem<'_>]) {
+    for item in items {
+        match item {
+            ListItem::Elements { attributes, .. } => {
+                attributes.remove(crate::tree::WIKIDOT_CONTROL_ONLY_LIST_ITEM_MARKER);
+            }
+            ListItem::SubList { element } => {
+                if let Element::List { items, .. } = element.as_mut() {
+                    strip_control_only_list_item_markers(items);
+                }
+            }
         }
     }
 }
@@ -9430,6 +9480,11 @@ fn lower_children<'t>(
     // function reads it.
     let outer_post_list_close = active.post_list_crossed_close;
     let mut frame_post_list_close = false;
+    let is_paragraph = matches!(
+        element,
+        Element::Container(container) if container.ctype() == ContainerType::Paragraph
+    );
+    let mut retained_empty_children = Vec::new();
     let mut visit = |children: &mut Vec<Element<'t>>| {
         lowered = true;
         active.post_list_crossed_close = false;
@@ -9458,6 +9513,7 @@ fn lower_children<'t>(
         // list item's own sequence reads it back (aw-anchor-close-on-heading).
         let barrier_pended_outer = active.heading_barrier_pended;
         active.heading_barrier_pended = false;
+        let mut saw_empty_inline_owner = false;
         if root_tail_vehicle
             && frame_children_need_root_tail_assembly(
                 children,
@@ -9467,7 +9523,7 @@ fn lower_children<'t>(
             materialize_frame_blank_tails(children);
             lower_root_sequence(children, valid, ordinal, active, trim_next_break, bib);
         } else {
-            lower_sequence(
+            let effects = lower_sequence(
                 children,
                 valid,
                 ordinal,
@@ -9478,7 +9534,16 @@ fn lower_children<'t>(
                 bib,
                 false,
             );
+            saw_empty_inline_owner = effects.saw_empty_inline_owner;
         }
+        let retain = if is_paragraph {
+            saw_empty_inline_owner && children.is_empty()
+        } else {
+            saw_empty_inline_owner
+                && !children.is_empty()
+                && all_whitespace_text(children)
+        };
+        retained_empty_children.push(retain);
         let barrier_pended_here =
             mem::replace(&mut active.heading_barrier_pended, barrier_pended_outer);
         if truncate_at_entry && barrier_pended_here {
@@ -9537,6 +9602,18 @@ fn lower_children<'t>(
         active.frame_entry = outer_entry;
     };
     visit_children_mut(element, &mut visit);
+    if let Element::Container(container) = element
+        && container.ctype() == ContainerType::Paragraph
+        && retained_empty_children.first().copied().unwrap_or(false)
+    {
+        container.elements_mut().clear();
+        container
+            .attributes_mut()
+            .insert(WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER, Cow::Borrowed(""));
+    } else if let Element::List { items, .. } = element {
+        let mut flags = retained_empty_children.into_iter();
+        mark_retained_empty_list_items(items, &mut flags);
+    }
     // Item 84(c): `unfolded_tail_start` is computed by the table cut on the
     // pre-lowering body (`keep_wikidot_row_suffix`), but frame assembly and
     // inline-scope lowering rewrite the body — a straddling scope wraps the
@@ -9563,6 +9640,33 @@ fn lower_children<'t>(
         fix_outer_close_eof_breaks(children, frame_post_list_close);
     }
     lowered
+}
+
+fn mark_retained_empty_list_items<'t>(
+    items: &mut [ListItem<'t>],
+    flags: &mut impl Iterator<Item = bool>,
+) {
+    for item in items {
+        match item {
+            ListItem::Elements {
+                attributes,
+                elements,
+            } => {
+                if flags.next().unwrap_or(false) {
+                    elements.clear();
+                    attributes.insert(
+                        crate::tree::WIKIDOT_CONTROL_ONLY_LIST_ITEM_MARKER,
+                        Cow::Borrowed(""),
+                    );
+                }
+            }
+            ListItem::SubList { element } => {
+                if let Element::List { items, .. } = element.as_mut() {
+                    mark_retained_empty_list_items(items, flags);
+                }
+            }
+        }
+    }
 }
 
 /// Whether `element`'s subtree holds the row-suffix `||` left behind by a
@@ -10261,14 +10365,23 @@ impl<'t> WikidotFrameAssembly<'t> {
                 // join break (@@@@ / @@@@) is content: live renders the
                 // paragraph as <p><br></p>, so keep it whole
                 // (PARA-RAW-PROBE).
-                let lone_break = matches!(elements.as_slice(), [Element::LineBreak]);
+                let lone_break = matches!(elements.as_slice(), [Element::LineBreak])
+                    || (trailing_raw == WikidotTrailingRawShape::Single
+                        && elements.len() == 2
+                        && matches!(
+                            elements.first(),
+                            Some(Element::Partial(
+                                PartialElement::WikidotEmptyInlineOwner
+                            ))
+                        )
+                        && matches!(elements.last(), Some(Element::LineBreak)));
                 if (elements.len() > 1
                     || (lone_break && trailing_raw == WikidotTrailingRawShape::Single))
                     && matches!(elements.last(), Some(Element::LineBreak))
                 {
                     elements.pop();
                 }
-                elements.is_empty()
+                elements_render_empty(elements)
             }
             _ => return,
         };
@@ -11822,6 +11935,59 @@ mod tests {
             render_wikidot("[[div]]\n[[span]]\n= [[/span]]\n[[/div]]"),
             ""
         );
+    }
+
+    #[test]
+    fn wikidot_empty_construct_retention_shapes() {
+        let cases = [
+            ("1_raw", "@@@@", "<p></p>"),
+            ("2_space_backslash", " \\", "<br />\n"),
+            (
+                "3_empty_span",
+                "[[span class=\"foo\"]][[/span]]",
+                "<p><span class=\"foo\"></span></p>",
+            ),
+            ("4_space_comment", " [!-- --]", "<p></p>"),
+            (
+                "5_quote_commas",
+                "> ,,,,",
+                "<blockquote><p></p></blockquote>",
+            ),
+            ("6_list_empty_interp", "* {{ }}", "<ul>\n<li></li>\n</ul>"),
+            ("7_quote_empty_list", "> * ", "<blockquote></blockquote>"),
+            // Quote-context leak non-regression: retention must stay inside the
+            // owning blockquote and never leak out as an unquoted empty <p>.
+            ("quote_raw", "> @@@@", "<blockquote><p></p></blockquote>"),
+            (
+                "quote_commas_then_text",
+                "> ,,,,\n\nafter",
+                "<blockquote><p></p></blockquote><p>after</p>",
+            ),
+            (
+                "quote_commas_then_unquoted_comment",
+                "> ,,,,\n\n[!-- --]",
+                "<blockquote><p></p></blockquote>",
+            ),
+            (
+                "quote_empty_list_then_text",
+                "> * \n\nafter",
+                "<blockquote></blockquote><p>after</p>",
+            ),
+            // Negative controls: truly empty constructs must still vanish.
+            ("bare_comment", "[!-- --]", ""),
+            ("bare_list_marker", "* ", ""),
+            ("bare_backslash", "\\", ""),
+        ];
+        let mut diffs = Vec::new();
+        for (name, input, expected) in cases {
+            let actual = render_wikidot(input);
+            if actual != expected {
+                diffs.push(format!(
+                    "{name} ({input:?}): actual={actual:?} expected={expected:?}"
+                ));
+            }
+        }
+        assert!(diffs.is_empty(), "mismatches:\n{}", diffs.join("\n"));
     }
 
     fn max_inline_scope_container_depth(elements: &[Element<'_>]) -> usize {

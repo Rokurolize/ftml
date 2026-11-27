@@ -407,6 +407,7 @@ pub(super) fn preserve_wikidot_document_indentation_barrier(text: &mut String) {
                     | b'|'
                     | b'['
                     | b'_'
+                    | b'\\'
                     | b'*'
                     | b'#'
                     | b'~'
@@ -415,7 +416,9 @@ pub(super) fn preserve_wikidot_document_indentation_barrier(text: &mut String) {
             )
         )
     {
-        let replacement = if structural == Some(b'_') {
+        let replacement = if matches!(structural, Some(b'_' | b'\\'))
+            || text[leading_len..].starts_with("[!--")
+        {
             "\0 "
         } else {
             "\0"

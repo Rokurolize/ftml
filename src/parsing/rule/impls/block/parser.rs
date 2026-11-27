@@ -33,12 +33,13 @@ use crate::parsing::parser::{
     QuoteBodyLineStatus, QuoteEscapedUnit, QuoteScanOutcome, WikidotLiClose,
     WikidotLiHead,
 };
+use crate::parsing::rule::impls::wikidot_code_token_at;
 use crate::parsing::{
     ExtractedToken, ParagraphSplitEntry, ParagraphSplitKind, ParseError, ParseErrorKind,
     ParseResult, Parser, Token, gather_paragraphs, trim_wikidot_ascii,
 };
 use crate::tree::{AttributeMap, Container, ContainerType, Element, Elements};
-use crate::wikidot_raw_escape::{PLACEHOLDER_CLOSE, PLACEHOLDER_OPEN, raw_escapes};
+use crate::wikidot_raw_escape::{PLACEHOLDER_CLOSE, PLACEHOLDER_OPEN, numbered_escapes};
 use regex::Regex;
 use std::borrow::Cow;
 use std::sync::LazyLock;
@@ -1060,9 +1061,15 @@ fn wikidot_line_greedy_head_is_usable(parser: &Parser<'_, '_>) -> bool {
     }
 }
 
-/// Whether a quoted Wikidot attribute value contains complete raw inline
-/// markup (`@@...@@` or `@<...>@`), which live evaluates to an empty value.
+/// Whether a quoted Wikidot attribute value contains a complete raw inline
+/// construct (`@@...@@`, `@<...>@`, or `` ``...`` ``).
 fn wikidot_attribute_value_raw_elides(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    if (0..bytes.len())
+        .any(|index| bytes[index] == b'`' && wikidot_code_token_at(value, index))
+    {
+        return true;
+    }
     let mut rest = value;
     while let Some(offset) = rest.find('@') {
         rest = &rest[offset..];
@@ -1236,18 +1243,15 @@ fn wikidot_encoded_attribute_value(
     range: std::ops::Range<usize>,
 ) -> Option<String> {
     let full = field.full_source();
-    let escapes = raw_escapes(full);
-    let mut contained: Vec<(usize, &crate::wikidot_raw_escape::RawEscape)> = escapes
+    let numbered = numbered_escapes(full);
+    let mut contained: Vec<&crate::wikidot_raw_escape::NumberedEscape> = numbered
         .iter()
-        .enumerate()
-        .filter(|(_, escape)| escape.start >= range.start && escape.end <= range.end)
+        .filter(|escape| escape.start >= range.start && escape.end <= range.end)
         .collect();
     if contained.is_empty() {
         return None;
     }
-    // Ordinals follow live's pass order (`@<...>@` first), the replacement
-    // itself follows source order.
-    contained.sort_by_key(|(_, escape)| escape.start);
+    contained.sort_by_key(|escape| escape.start);
 
     let mut elisions: Vec<std::ops::Range<usize>> = Vec::new();
     elisions.extend(field.comment_ranges().iter().cloned());
@@ -1256,10 +1260,10 @@ fn wikidot_encoded_attribute_value(
 
     let mut output = String::with_capacity(range.len());
     let mut cursor = range.start;
-    for (ordinal, escape) in contained {
+    for escape in contained {
         push_wikidot_attribute_plain(&mut output, full, cursor..escape.start, &elisions);
         output.push(PLACEHOLDER_OPEN);
-        output.push_str(&(ordinal + 1).to_string());
+        output.push_str(&escape.ordinal.to_string());
         output.push(PLACEHOLDER_CLOSE);
         cursor = escape.end;
     }

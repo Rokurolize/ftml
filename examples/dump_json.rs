@@ -213,8 +213,12 @@ fn output_data<T: Serialize + Debug>(
 fn main() {
     let config = parse_args();
     let input = get_wikitext(config.input_path.as_deref());
-    let (output_type, output_field, pretty_print) =
-        (config.output_type, config.output_field, config.pretty);
+    let (output_type, output_field, pretty_print, layout) = (
+        config.output_type,
+        config.output_field,
+        config.pretty,
+        config.layout,
+    );
     let (page_info, parse_settings) = get_settings(config);
 
     let (mut wikitext, _pages) = ftml::include(
@@ -225,7 +229,7 @@ fn main() {
     )
     .unwrap_or_else(|x| match x {});
 
-    ftml::preprocess(&mut wikitext);
+    ftml::preprocess_for_layout(&mut wikitext, layout);
     let tokens = ftml::tokenize(&wikitext);
     let result = ftml::parse(&tokens, &page_info, &parse_settings);
     let (tree, errors) = result.into();

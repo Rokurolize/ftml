@@ -58,6 +58,35 @@ fn heading_from_token(token: &ExtractedToken<'_>) -> Heading {
         .expect("Received invalid heading length token slice")
 }
 
+fn wikidot_control_before_unlabeled_footnote(source: &str, start: usize) -> bool {
+    let line_start = source[..start.min(source.len())]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let line_end = source[line_start..]
+        .find('\n')
+        .map_or(source.len(), |index| line_start + index);
+    let line = &source[line_start..line_end];
+    let lowered = line.to_ascii_lowercase();
+    let Some(opener) = lowered.find("[[footnote]]") else {
+        return false;
+    };
+    let prefix = line[..opener]
+        .trim_start_matches('+')
+        .trim_start_matches([' ', '\t']);
+    let mut saw_control = false;
+    for character in prefix.chars() {
+        if matches!(
+            character,
+            '\u{0000}' | '\u{0001}' | '\u{0008}' | '\u{001f}' | '\u{0085}'
+        ) {
+            saw_control = true;
+        } else if !character.is_whitespace() {
+            return false;
+        }
+    }
+    saw_control
+}
+
 fn consume_header_once<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -67,6 +96,10 @@ fn consume_header_once<'r, 't>(
     let heading = heading_from_token(heading_token);
 
     step_expected(parser, Token::Whitespace)?;
+    while parser.current().token == Token::DiscardedControl {
+        parser.step()?;
+    }
+    let content_start = parser.current().span.start;
 
     let close = [
         ParseCondition::current(Token::InputEnd),
@@ -100,13 +133,29 @@ fn consume_header_once<'r, 't>(
         _ => unreachable!("header collection always returns one container"),
     };
 
+    let control_owned_footnote = parser.settings().layout.legacy()
+        && wikidot_control_before_unlabeled_footnote(
+            parser.full_text().inner(),
+            content_start,
+        );
     if parser.settings().layout.legacy()
         && content == WikidotHeadingContent::FootnoteFirst
     {
-        return ok!(
-            wikidot_literal_heading(heading_token.slice, elements),
-            all_errors,
-        );
+        if !control_owned_footnote {
+            return ok!(
+                wikidot_literal_heading(heading_token.slice, elements),
+                all_errors,
+            );
+        }
+        if let Elements::Single(Element::Container(container)) = &mut elements {
+            container.elements_mut().retain(|element| {
+                !matches!(
+                    element,
+                    Element::Text(text) | Element::Raw(text)
+                        if text.chars().all(char::is_whitespace)
+                )
+            });
+        }
     }
 
     if parser.settings().layout.legacy()
@@ -120,11 +169,26 @@ fn consume_header_once<'r, 't>(
         if let Ok(footnote) = super::RULE_BLOCK.try_consume(&mut candidate)
             && let Elements::Single(Element::Footnote(index)) = footnote.item
         {
-            let mut literal = wikidot_literal_heading(heading_token.slice, elements);
-            literal.push(Element::Footnote(index));
-            all_errors.extend(footnote.errors);
-            parser.update(&candidate);
-            return ok!(literal, all_errors);
+            if control_owned_footnote
+                && let Elements::Single(Element::Container(container)) = &mut elements
+            {
+                container.elements_mut().retain(|element| {
+                    !matches!(
+                        element,
+                        Element::Text(text) | Element::Raw(text)
+                            if text.chars().all(char::is_whitespace)
+                    )
+                });
+                container.elements_mut().push(Element::Footnote(index));
+                all_errors.extend(footnote.errors);
+                parser.update(&candidate);
+            } else {
+                let mut literal = wikidot_literal_heading(heading_token.slice, elements);
+                literal.push(Element::Footnote(index));
+                all_errors.extend(footnote.errors);
+                parser.update(&candidate);
+                return ok!(literal, all_errors);
+            }
         }
     }
 

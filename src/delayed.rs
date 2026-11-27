@@ -227,6 +227,7 @@ enum DelayedNode<'t> {
         slots: Vec<(SlotId, GeneratedKind)>,
     },
     TypographyBoundary,
+    WikidotDiscardedControlBeforeFootnote,
     RuntimeText(Cow<'t, str>),
     Raw {
         atoms: Vec<RecoveryAtom<'t>>,
@@ -298,8 +299,21 @@ impl<'t> DelayedElement<'t> {
         }
     }
 
+    pub(crate) fn wikidot_discarded_control_before_footnote() -> Self {
+        Self {
+            node: DelayedNode::WikidotDiscardedControlBeforeFootnote,
+        }
+    }
+
     pub(crate) fn is_typography_boundary(&self) -> bool {
         matches!(&self.node, DelayedNode::TypographyBoundary)
+    }
+
+    pub(crate) fn is_wikidot_discarded_control_before_footnote(&self) -> bool {
+        matches!(
+            &self.node,
+            DelayedNode::WikidotDiscardedControlBeforeFootnote
+        )
     }
 
     pub(crate) fn is_suppression_seam(&self) -> bool {
@@ -402,7 +416,9 @@ impl<'t> DelayedElement<'t> {
             | DelayedNode::TagExternalLabel { .. }
             | DelayedNode::TagImage(_) => 1,
             DelayedNode::Suppressed { slots } => slots.len(),
-            DelayedNode::TypographyBoundary | DelayedNode::RuntimeText(_) => 0,
+            DelayedNode::TypographyBoundary
+            | DelayedNode::WikidotDiscardedControlBeforeFootnote
+            | DelayedNode::RuntimeText(_) => 0,
             DelayedNode::Raw { atoms } | DelayedNode::Shell { atoms } => atoms
                 .iter()
                 .filter(|atom| {
@@ -442,6 +458,9 @@ impl<'t> DelayedElement<'t> {
                 slots: slots.clone(),
             },
             DelayedNode::TypographyBoundary => DelayedNode::TypographyBoundary,
+            DelayedNode::WikidotDiscardedControlBeforeFootnote => {
+                DelayedNode::WikidotDiscardedControlBeforeFootnote
+            }
             DelayedNode::RuntimeText(text) => {
                 DelayedNode::RuntimeText(Cow::Owned(text.to_string()))
             }
@@ -1035,7 +1054,10 @@ fn resolve_delayed(
     match &delayed.node {
         DelayedNode::Active { id, kind } => resolve_active(*id, *kind, bindings),
         DelayedNode::Suppressed { .. } => Err(DelayedError::UnresolvedGeneratedOwner),
-        DelayedNode::TypographyBoundary => Err(DelayedError::UnresolvedGeneratedOwner),
+        DelayedNode::TypographyBoundary
+        | DelayedNode::WikidotDiscardedControlBeforeFootnote => {
+            Err(DelayedError::UnresolvedGeneratedOwner)
+        }
         DelayedNode::RuntimeText(text) => {
             Ok(vec![Element::Text(Cow::Owned(text.to_string()))])
         }

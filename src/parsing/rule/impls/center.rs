@@ -48,6 +48,22 @@ fn wikidot_self_removing_run_body(parser: &Parser<'_, '_>, from: usize) -> bool 
     matches!(&body_source[..end], "****" | "@@@@" | "____")
 }
 
+fn wikidot_vertical_whitespace_before_unlabeled_footnote(
+    parser: &Parser<'_, '_>,
+) -> bool {
+    let source = parser.full_text().inner();
+    let mut end = parser.current().span.start;
+    let mut saw_control = false;
+    while matches!(source.as_bytes().get(end), Some(0x0b | 0x0c)) {
+        end += 1;
+        saw_control = true;
+    }
+    saw_control
+        && source[end..]
+            .get(.."[[footnote]]".len())
+            .is_some_and(|head| head.eq_ignore_ascii_case("[[footnote]]"))
+}
+
 fn try_consume_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -57,10 +73,10 @@ fn try_consume_fn<'r, 't>(
     step_expected(parser, Token::Whitespace)?;
 
     if parser.settings().layout.legacy()
-        && matches!(
+        && (matches!(
             parser.current().token,
             Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
-        )
+        ) || wikidot_vertical_whitespace_before_unlabeled_footnote(parser))
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }

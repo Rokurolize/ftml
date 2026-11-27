@@ -6062,6 +6062,15 @@ fn lower_sequence<'t>(
             *trim_next_break = false;
         }
         if matches!(
+            &element,
+            Element::Delayed(delayed)
+                if delayed.is_wikidot_discarded_control_before_footnote()
+        ) {
+            preserve_space_before_footnote =
+                matches!(source.peek(), Some(Element::Footnote(_)));
+            continue;
+        }
+        if matches!(
             element,
             Element::Partial(PartialElement::WikidotEmptyInlineOwner)
         ) {

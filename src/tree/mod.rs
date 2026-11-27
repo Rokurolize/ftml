@@ -138,6 +138,7 @@ pub(crate) const WIKIDOT_HEADING_BARRIER_MARKER: &str = "data-ftml-heading-barri
 /// renderer then emits the bare heading element instead of an implicit label
 /// span. Stripped when rendered.
 pub(crate) const WIKIDOT_HEADING_REOPEN_MARKER: &str = "data-ftml-heading-reopen";
+pub(crate) const WIKIDOT_HEADING_EMPTIED_MARKER: &str = "data-ftml-heading-emptied";
 /// Marks the first body paragraph after a collapsible head that ended a
 /// heading line: the heading line ends there, so the body is an ordinary
 /// paragraph chunk in live's output and must not be flattened into the

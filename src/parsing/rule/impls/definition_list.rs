@@ -149,7 +149,8 @@ fn parse_definition_list<'r, 't>(
     }
 
     if items.is_empty() {
-        if residue_vanished {
+        let vanished_in_span = residue_vanished && parser.in_wikidot_span_body();
+        if residue_vanished && !vanished_in_span {
             parser.mark_wikidot_colon_line_vanished();
         }
         let mut recovered = Vec::new();
@@ -160,7 +161,7 @@ fn parse_definition_list<'r, 't>(
             recovered.push(close);
         }
         match recovered.len() {
-            0 => ok!(false; Elements::None, errors),
+            0 => ok!(vanished_in_span; Elements::None, errors),
             1 => ok!(recovered.pop().expect("one recovered element"), errors),
             _ => ok!(false; Elements::Multiple(recovered), errors),
         }
@@ -440,6 +441,7 @@ where
     };
     let span_open_at_line_start =
         parser.settings().layout.legacy() && parser.in_wikidot_span_body();
+    let error_len = errors.len();
     let scan =
         collect_key_scanning(parser, prefix_ws_extra, &mut errors, &mut paragraph_safe);
     let parts = match scan {
@@ -455,6 +457,7 @@ where
             Some((key_elements, key_string, value_elements, last))
         }
         Ok(KeyScan::Residue(mut residue)) => {
+            errors.truncate(error_len);
             if span_open_at_line_start {
                 *residue_span_close = residue.swallowed_span_close.take();
             }

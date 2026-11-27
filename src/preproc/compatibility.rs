@@ -36,6 +36,8 @@ pub(crate) const WIKIDOT_CROSSED_LIST_BREAK_SENTINEL: &str =
     "[!--ftml-crossed-list-break--]";
 pub(crate) const WIKIDOT_CROSSED_OL_TAIL_SENTINEL: &str = "[!--ftml-crossed-ol-tail--]";
 pub(crate) const WIKIDOT_CROSSED_OL_OPEN_SENTINEL: &str = "[!--ftml-crossed-ol-open--]";
+pub(crate) const WIKIDOT_CROSSED_HEADING_CLOSE_SENTINEL: &str =
+    "[!--ftml-crossed-heading-close--]";
 
 /// The crossed-tail sentinel kinds the preprocessor may place after a flat
 /// crossed owner close (BRIEF-RM83 shapes 2/3, BRIEF-RMRES u2r-ol).
@@ -2114,7 +2116,9 @@ fn canonicalize_list_cross_div_heading_close(
             let (close_body, close_ending) = split_line(&lines[close_index]);
             let head = close_body[..close_at].to_owned();
             let tail = &close_body[close_at + "[[/div]]".len()..];
-            lines[close_index] = format!("{head}{tail}{close_ending}");
+            lines[close_index] = format!(
+                "{head}{WIKIDOT_CROSSED_HEADING_CLOSE_SENTINEL}{tail}{close_ending}"
+            );
         }
         index += 1;
     }

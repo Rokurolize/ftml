@@ -21,7 +21,10 @@
 use super::prelude::*;
 use crate::parsing::ParseSuccess;
 use crate::parsing::parser::block_pairs::WikidotBlockKind;
-use crate::tree::{Container, Heading, HeadingReopen, WIKIDOT_HEADING_BARRIER_MARKER};
+use crate::tree::{
+    Container, Heading, HeadingReopen, WIKIDOT_HEADING_BARRIER_MARKER,
+    WIKIDOT_HEADING_EMPTIED_MARKER,
+};
 use std::borrow::Cow;
 use std::convert::TryInto;
 
@@ -87,6 +90,15 @@ fn wikidot_control_before_unlabeled_footnote(source: &str, start: usize) -> bool
     saw_control
 }
 
+fn wikidot_crossed_heading_close_on_line(parser: &Parser<'_, '_>) -> bool {
+    let source = parser.full_text().inner();
+    let start = parser.current().span.start.min(source.len());
+    let end = source[start..]
+        .find('\n')
+        .map_or(source.len(), |offset| start + offset);
+    source[start..end].contains(crate::preproc::WIKIDOT_CROSSED_HEADING_CLOSE_SENTINEL)
+}
+
 fn consume_header_once<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -118,6 +130,8 @@ fn consume_header_once<'r, 't>(
     } else {
         None
     };
+    let crossed_close_on_line = parser.settings().layout.legacy()
+        && wikidot_crossed_heading_close_on_line(parser);
     let collected = collect_wikidot_heading_with_barriers(parser, ctype, heading, &close);
     if let Some((single_line, heading_line)) = restore_line {
         parser.set_in_wikidot_single_line_content(single_line);
@@ -226,6 +240,14 @@ fn consume_header_once<'r, 't>(
 
     if parser.settings().layout.legacy() {
         elements = hoist_heading_explicit_lists(elements);
+    }
+    if crossed_close_on_line
+        && let Elements::Single(Element::Container(container)) = &mut elements
+        && container.elements().is_empty()
+    {
+        container
+            .attributes_mut()
+            .insert(WIKIDOT_HEADING_BARRIER_MARKER, cow!(""));
     }
 
     ok!(false; elements, all_errors)
@@ -520,6 +542,11 @@ fn hoist_heading_explicit_lists<'t>(elements: Elements<'t>) -> Elements<'t> {
             };
             let hoisted = container.elements_mut().split_off(list_at);
             trim_heading_prefix_space(&mut container);
+            if container.elements().is_empty() {
+                container
+                    .attributes_mut()
+                    .insert(WIKIDOT_HEADING_EMPTIED_MARKER, cow!(""));
+            }
             let mut output = Vec::with_capacity(hoisted.len() + 1);
             output.push(Element::Container(container));
             output.extend(hoisted);

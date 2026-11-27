@@ -270,6 +270,47 @@ fn post_list_gap_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     true
 }
 
+fn close_on_vanished_definition_line(parser: &Parser<'_, '_>, byte: usize) -> bool {
+    if !parser.settings().layout.legacy() {
+        return false;
+    }
+    let source = parser.full_text().inner();
+    let bytes = source.as_bytes();
+    if byte > bytes.len() {
+        return false;
+    }
+    let line_start = source[..byte].rfind('\n').map_or(0, |index| index + 1);
+    if bytes.get(line_start) != Some(&b':')
+        || !matches!(bytes.get(line_start + 1), Some(b' ' | b'\t'))
+    {
+        return false;
+    }
+    let line_end = source[line_start..]
+        .find('\n')
+        .map_or(source.len(), |offset| line_start + offset);
+    let mut first = line_start + 1;
+    while matches!(bytes.get(first), Some(b' ' | b'\t')) {
+        first += 1;
+    }
+    if bytes.get(first) == Some(&b':') {
+        let mut value = first + 1;
+        while matches!(bytes.get(value), Some(b' ' | b'\t')) {
+            value += 1;
+        }
+        if value < line_end {
+            return false;
+        }
+    }
+    let mut index = first;
+    while index + 1 < line_end {
+        if matches!(bytes[index], b' ' | b'\t') && bytes[index + 1] == b':' {
+            return false;
+        }
+        index += 1;
+    }
+    true
+}
+
 fn closer_bare_before(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
     let mut pos = index;
     while pos > 0 {
@@ -545,6 +586,9 @@ pub(super) fn validate_reachable_close(
             if forgave_post_list_gap {
                 return Err(parser.make_err(ParseErrorKind::RuleFailed));
             }
+            if close_on_vanished_definition_line(parser, tokens[index].span.start) {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
             return Ok(());
         }
         match tokens[index].token {
@@ -714,6 +758,9 @@ pub(super) fn validate_reachable_close(
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
                 if forgave_post_list_gap && closer_bare_before(tokens, index) {
+                    return Err(parser.make_err(ParseErrorKind::RuleFailed));
+                }
+                if close_on_vanished_definition_line(parser, tokens[index].span.start) {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
                 return Ok(());

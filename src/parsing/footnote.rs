@@ -819,6 +819,14 @@ fn hoist_block_sequence<'t>(elements: Vec<Element<'t>>) -> Vec<Element<'t>> {
                 let ctype = container.ctype();
                 let attributes = container.attributes().clone();
                 *container.elements_mut() = children;
+                if matches!(ctype, ContainerType::Header(_))
+                    && container.elements().is_empty()
+                {
+                    container.attributes_mut().insert(
+                        crate::tree::WIKIDOT_HEADING_EMPTIED_MARKER,
+                        Cow::Borrowed(""),
+                    );
+                }
                 output.push(Element::Container(container));
                 output.push(footer);
                 if suffix_inline {

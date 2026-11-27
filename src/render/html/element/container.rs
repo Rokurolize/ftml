@@ -23,8 +23,9 @@ use super::prelude::*;
 use crate::tree::{
     Container, ContainerType, HtmlTag, WIKIDOT_EMPTY_QUOTE_MARKER,
     WIKIDOT_EMPTY_VALUE_ATTRIBUTE_MARKER, WIKIDOT_GENERATED_EMPTY_CLASS_MARKER,
-    WIKIDOT_HEADING_BARRIER_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
-    WIKIDOT_QUOTE_LIST_REPAIR_MARKER, WIKIDOT_TAB_PANEL_MARKER,
+    WIKIDOT_HEADING_BARRIER_MARKER, WIKIDOT_HEADING_EMPTIED_MARKER,
+    WIKIDOT_HEADING_REOPEN_MARKER, WIKIDOT_QUOTE_LIST_REPAIR_MARKER,
+    WIKIDOT_TAB_PANEL_MARKER,
 };
 
 pub fn render_container(ctx: &mut HtmlContext, container: &Container) {
@@ -197,11 +198,18 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
                 .attributes()
                 .get()
                 .contains_key(WIKIDOT_HEADING_REOPEN_MARKER));
+    let heading_emptied = layout.legacy()
+        && matches!(container.ctype(), ContainerType::Header(_))
+        && container
+            .attributes()
+            .get()
+            .contains_key(WIKIDOT_HEADING_EMPTIED_MARKER);
     let mut heading_barrier_attributes = None;
-    let attributes = if heading_barrier {
+    let attributes = if heading_barrier || heading_emptied {
         let mut attributes = container.attributes().clone();
         attributes.remove(WIKIDOT_HEADING_BARRIER_MARKER);
         attributes.remove(WIKIDOT_HEADING_REOPEN_MARKER);
+        attributes.remove(WIKIDOT_HEADING_EMPTIED_MARKER);
         heading_barrier_attributes.insert(attributes)
     } else if preserve_generated_empty_class {
         let mut attributes = container.attributes().clone();
@@ -260,8 +268,8 @@ pub fn render_container_internal(ctx: &mut HtmlContext, container: &Container) {
     if layout.legacy() && wikidot_inline_container_folds_html(container) {
         tag.inner(|ctx| render_wikidot_inline_html_run(ctx, container.elements()));
     } else if layout.legacy() && matches!(container.ctype(), ContainerType::Header(_)) {
-        if container.elements().is_empty()
-            || heading_barrier
+        if heading_barrier
+            || (heading_emptied && container.elements().is_empty())
             || has_wikidot_heading_label_span(container.elements())
         {
             tag.contents(container.elements());

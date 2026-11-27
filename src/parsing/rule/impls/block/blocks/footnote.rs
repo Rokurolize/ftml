@@ -20,6 +20,7 @@
 
 use super::append_wikidot_footnote_trailing_list_break;
 use super::prelude::*;
+use crate::delayed::DelayedElement;
 use crate::parsing::body_end::wikidot_footnote_yields_enclosing_closer;
 use crate::parsing::parse_boolean;
 use crate::parsing::rule::impls::comment_closer_token_count;
@@ -87,6 +88,8 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     let suppress_wikidot_body_reference = parser.settings().layout.legacy()
         && (wikidot_bare_quote_line_before_footnote(parser, opener_start)
             || wikidot_quoted_footnote_inside_quote_div(parser, opener_start));
+    let control_before_footnote = parser.settings().layout.legacy()
+        && wikidot_discarded_control_before_footnote(parser, opener_start);
 
     if parser.settings().layout.legacy() {
         parser.arm_footnote_zone();
@@ -227,11 +230,31 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     if suppress_wikidot_body_reference {
         return ok!(false; Vec::new(), errors);
     }
-    if fused_close {
-        ok!(true; vec![Element::Footnote(index.into()), text!("]")], errors)
-    } else {
-        ok!(Element::Footnote(index.into()), errors)
+    let mut reference_elements = Vec::new();
+    if control_before_footnote {
+        reference_elements.push(Element::Delayed(
+            DelayedElement::wikidot_discarded_control_before_footnote(),
+        ));
     }
+    reference_elements.push(Element::Footnote(index.into()));
+    if fused_close {
+        reference_elements.push(text!("]"));
+    }
+    ok!(reference_elements, errors)
+}
+
+fn wikidot_discarded_control_before_footnote(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
+    parser
+        .full_text()
+        .inner()
+        .get(..opener_start)
+        .and_then(|prefix| prefix.chars().next_back())
+        .is_some_and(|character| {
+            crate::parsing::is_discarded_control(character) && !character.is_whitespace()
+        })
 }
 
 fn restore_wikidot_literal_block_line_break(elements: &mut Vec<Element<'_>>) {

@@ -1301,7 +1301,8 @@ where
                 _ => offset += 1,
             }
         };
-        let label = source[label_start..right_block_start].trim();
+        let label =
+            crate::parsing::trim_wikidot_ascii(&source[label_start..right_block_start]);
         if label.is_empty() {
             return Ok(None);
         }
@@ -1357,7 +1358,7 @@ where
             }
         }
         let label_end = scan.current().span.start;
-        let label = source[label_from..label_end].trim();
+        let label = crate::parsing::trim_wikidot_ascii(&source[label_from..label_end]);
         if label.is_empty() {
             return Ok(None);
         }

@@ -2540,6 +2540,18 @@ where
             }
 
             let end_start = parser.current().span.start;
+            if parser.settings().layout.legacy()
+                && block_rule.name == "block-footnote"
+                && parser.current().token == Token::LeftBlockEnd
+                && parser
+                    .full_text()
+                    .inner()
+                    .as_bytes()
+                    .get(end_start + 3)
+                    .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
+            {
+                return Ok(false);
+            }
             if matches!(
                 block_rule.name,
                 "block-list-unordered" | "block-list-ordered"

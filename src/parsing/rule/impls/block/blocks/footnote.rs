@@ -68,6 +68,13 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         }));
     }
 
+    if parser.settings().layout.legacy()
+        && parser.in_wikidot_bibliography_body()
+        && wikidot_unclosed_before_bibliography_closer(parser, opener_start)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
     let parser = &mut ParserWrap::new(parser);
     parser.set_wikidot_footnote_body_head_byte(Some(opener_start));
 
@@ -76,6 +83,10 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     assert_block_name(&BLOCK_FOOTNOTE, name);
 
     parser.get_head_none(&BLOCK_FOOTNOTE, in_head)?;
+
+    let suppress_wikidot_body_reference = parser.settings().layout.legacy()
+        && (wikidot_bare_quote_line_before_footnote(parser, opener_start)
+            || wikidot_quoted_footnote_inside_quote_div(parser, opener_start));
 
     if parser.settings().layout.legacy() {
         parser.arm_footnote_zone();
@@ -200,6 +211,7 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         bare_wikidot_footnote_spent_quote_tail(&mut elements);
         merge_wikidot_footnote_empty_div_tail(&mut elements);
         repair_wikidot_footnote_bibliography_marker_line(parser, &mut elements);
+        restore_wikidot_literal_block_line_break(&mut elements);
     }
 
     let row_tail = if parser.settings().layout.legacy() {
@@ -212,10 +224,93 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         parser.set_footnote_row_tail(index, row_tail);
     }
 
+    if suppress_wikidot_body_reference {
+        return ok!(false; Vec::new(), errors);
+    }
     if fused_close {
         ok!(true; vec![Element::Footnote(index.into()), text!("]")], errors)
     } else {
         ok!(Element::Footnote(index.into()), errors)
+    }
+}
+
+fn restore_wikidot_literal_block_line_break(elements: &mut Vec<Element<'_>>) {
+    for index in 1..elements.len() {
+        let Element::Text(text) = &elements[index] else {
+            continue;
+        };
+        if !text.starts_with("\n[[") {
+            continue;
+        }
+        let Element::Text(text) = elements.remove(index) else {
+            unreachable!();
+        };
+        let rest = text.trim_start_matches('\n').to_owned();
+        elements.insert(index, Element::Text(Cow::Owned(rest)));
+        elements.insert(index, Element::LineBreak);
+    }
+}
+
+fn wikidot_bare_quote_line_before_footnote(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    if opener_start == 0 || source.as_bytes().get(opener_start - 1) != Some(&b'\n') {
+        return false;
+    }
+    let previous_end = opener_start - 1;
+    let previous_start = source[..previous_end]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let previous = &source[previous_start..previous_end];
+    previous.starts_with('>')
+        && previous
+            .as_bytes()
+            .get(1)
+            .is_some_and(|byte| !matches!(byte, b' ' | b'\t'))
+}
+
+fn wikidot_quoted_footnote_inside_quote_div(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let line_start = source[..opener_start]
+        .rfind('\n')
+        .map_or(0, |index| index + 1);
+    let prefix = &source[line_start..opener_start];
+    if !prefix.starts_with('>')
+        || !prefix[1..]
+            .chars()
+            .all(|character| matches!(character, ' ' | '\t' | '>'))
+    {
+        return false;
+    }
+    source[..line_start].contains("[[div]]")
+        && source[opener_start..].contains("[[/div]]")
+}
+
+fn wikidot_unclosed_before_bibliography_closer(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let Some(region) = source.get(opener_start..) else {
+        return false;
+    };
+    let footnote_close = region
+        .to_ascii_lowercase()
+        .find("[[/footnote]]")
+        .map(|index| opener_start + index);
+    let bibliography_close = region
+        .to_ascii_lowercase()
+        .find("[[/bibliography]]")
+        .map(|index| opener_start + index);
+    match (footnote_close, bibliography_close) {
+        (_, None) => false,
+        (Some(footnote), Some(bibliography)) => bibliography < footnote,
+        (None, Some(_)) => true,
     }
 }
 

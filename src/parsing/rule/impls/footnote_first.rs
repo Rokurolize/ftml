@@ -115,7 +115,7 @@ fn prefix_has_authored_syntax(prefix: &str) -> bool {
             .chars()
             .next()
             .expect("cursor remains on a character boundary");
-        if character.is_whitespace() {
+        if character.is_whitespace() && character != '\u{0085}' {
             cursor += character.len_utf8();
             continue;
         }

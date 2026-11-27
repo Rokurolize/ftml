@@ -1537,6 +1537,18 @@ fn remove_tight_quote_lines(lines: &mut [String], literal_lines: &[bool]) {
             active_quote_depth = depth;
             continue;
         }
+        if let Some(footnote) = body[marker_depth..].find(FOOTNOTE_HEAD) {
+            let depth = marker_depth
+                .max(active_quote_depth)
+                .clamp(1, MAX_SYNTHESIZED_QUOTE_DEPTH);
+            *line = format!(
+                "{} {}{ending}",
+                ">".repeat(depth),
+                &body[marker_depth + footnote..]
+            );
+            active_quote_depth = depth;
+            continue;
+        }
         if active_quote_depth == 0 {
             *line = ending.to_owned();
         } else {

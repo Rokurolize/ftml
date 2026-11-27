@@ -51,6 +51,8 @@ fn is_false(b: &bool) -> bool {
 pub struct FootnoteRef {
     pub index: usize,
     pub broke_anchor: bool,
+    pub preserve_preceding_space: bool,
+    pub drop_after_quote_close: bool,
 }
 
 impl FootnoteRef {
@@ -58,6 +60,8 @@ impl FootnoteRef {
         Self {
             index,
             broke_anchor: false,
+            preserve_preceding_space: false,
+            drop_after_quote_close: false,
         }
     }
 }

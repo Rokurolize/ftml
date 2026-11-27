@@ -1,0 +1,15 @@
+{
+    "elements": [
+        {
+            "element": "bibliography-block",
+            "data": {
+                "index": 0,
+                "title": "``x``",
+                "hide": false
+            }
+        }
+    ],
+    "bibliographies": [
+        []
+    ]
+}

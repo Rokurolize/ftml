@@ -370,6 +370,7 @@ where
                         inline_scope::strip_post_list_blank_gap_markers(items);
                     }
                 }
+                footnote::drop_wikidot_quote_tail_footnote_refs(&mut elements);
             }
             debug!(
                 "Finished parsing into syntax tree ({} errors)",

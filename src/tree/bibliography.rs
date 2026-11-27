@@ -75,6 +75,7 @@ pub struct Bibliography<'t> {
     reopened_wrappers: Vec<Vec<BibliographyScopeWrapper<'t>>>,
     title_wrappers: Vec<BibliographyScopeWrapper<'t>>,
     wikidot_block_open_elements: Vec<Element<'t>>,
+    wikidot_empty_title: bool,
     split_tail_next: usize,
 }
 
@@ -127,6 +128,7 @@ impl<'t> Bibliography<'t> {
             reopened_wrappers: Vec::new(),
             title_wrappers: Vec::new(),
             wikidot_block_open_elements: Vec::new(),
+            wikidot_empty_title: false,
             split_tail_next: 0,
         };
         bibliography.rebuild_label_index();
@@ -293,6 +295,14 @@ impl<'t> Bibliography<'t> {
         self.title_wrappers = wrappers;
     }
 
+    pub(crate) fn set_wikidot_empty_title(&mut self, value: bool) {
+        self.wikidot_empty_title = value;
+    }
+
+    pub(crate) fn wikidot_empty_title(&self) -> bool {
+        self.wikidot_empty_title
+    }
+
     #[inline]
     pub fn slice(&self) -> &[(Cow<'t, str>, Vec<Element<'t>>)] {
         &self.entries
@@ -329,6 +339,7 @@ impl<'t> Bibliography<'t> {
             .collect();
         bibliography.wikidot_block_open_elements =
             elements_to_owned(&self.wikidot_block_open_elements);
+        bibliography.wikidot_empty_title = self.wikidot_empty_title;
         bibliography
     }
 }

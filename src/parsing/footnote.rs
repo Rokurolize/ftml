@@ -209,6 +209,29 @@ fn merge_trailing_one_item_list<'t>(elements: &mut Vec<Element<'t>>) -> bool {
     changed
 }
 
+pub(crate) fn drop_wikidot_quote_tail_footnote_refs(elements: &mut Vec<Element<'_>>) {
+    elements.retain(|element| !is_dropped_quote_tail_footnote(element));
+}
+
+fn is_dropped_quote_tail_footnote(element: &Element<'_>) -> bool {
+    match element {
+        Element::Footnote(reference) => reference.drop_after_quote_close,
+        Element::Container(container)
+            if matches!(
+                container.ctype(),
+                ContainerType::Paragraph | ContainerType::Blockquote
+            ) =>
+        {
+            !container.elements().is_empty()
+                && container
+                    .elements()
+                    .iter()
+                    .all(is_dropped_quote_tail_footnote)
+        }
+        _ => false,
+    }
+}
+
 pub(crate) fn normalize_wikidot_blocks(
     elements: &mut Vec<Element<'_>>,
     footnotes_empty: bool,

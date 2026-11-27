@@ -607,7 +607,15 @@ pub fn render_bibliography(
     };
 
     if ctx.layout().legacy() {
-        let title = if title.is_empty() { None } else { Some(title) };
+        let title = if title == crate::tree::WIKIDOT_EXPLICIT_EMPTY_LABEL_MARKER
+            || bibliography.wikidot_empty_title()
+        {
+            Some("")
+        } else if title.is_empty() {
+            None
+        } else {
+            Some(title)
+        };
         render_wikidot_bibliography(ctx, title, bibliography, None);
         return;
     }

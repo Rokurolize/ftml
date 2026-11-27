@@ -1,0 +1,46 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "footnote",
+                        "data": 1
+                    }
+                ]
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "container",
+                "data": {
+                    "type": "paragraph",
+                    "attributes": {},
+                    "elements": [
+                        {
+                            "element": "text",
+                            "data": ">"
+                        }
+                    ]
+                }
+            },
+            {
+                "element": "bibliography-block",
+                "data": {
+                    "index": 0,
+                    "title": null,
+                    "hide": false
+                }
+            }
+        ]
+    ],
+    "needs-footnote-block": true,
+    "bibliographies": [
+        []
+    ]
+}

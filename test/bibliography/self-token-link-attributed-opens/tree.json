@@ -1,0 +1,24 @@
+{
+    "elements": [
+        {
+            "element": "bibliography-block",
+            "data": {
+                "index": 0,
+                "title": "First",
+                "hide": false
+            }
+        },
+        {
+            "element": "bibliography-block",
+            "data": {
+                "index": 1,
+                "title": "Second",
+                "hide": false
+            }
+        }
+    ],
+    "bibliographies": [
+        [],
+        []
+    ]
+}

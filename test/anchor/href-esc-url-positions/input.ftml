@@ -1,0 +1,9 @@
+[[a href="http://user:pass@example.com/x"]]x[[/a]]
+
+[[a href="http://example.com/x"]]x[[/a]]
+
+[[a href="http://example.com:80/x"]]x[[/a]]
+
+[[a href="http://example.com/x?q=v"]]x[[/a]]
+
+[[a href="http://example.com/x#fg"]]x[[/a]]

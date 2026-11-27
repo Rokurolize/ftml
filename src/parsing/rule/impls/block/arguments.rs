@@ -150,6 +150,51 @@ fn is_interior_c0_control(input: &str, index: usize, character: char) -> bool {
             .any(is_visible_attribute_character)
 }
 
+#[derive(Debug, Copy, Clone)]
+enum AnchorHrefControlReplacement {
+    Separator,
+    PercentEncoded,
+}
+
+fn is_interior_anchor_href_control(input: &str, index: usize, character: char) -> bool {
+    matches!(character, '\u{001B}' | '\u{007F}')
+        && input[..index].chars().any(is_visible_attribute_character)
+        && input[index + character.len_utf8()..]
+            .chars()
+            .any(is_visible_attribute_character)
+}
+
+fn replace_interior_anchor_href_controls<'t>(
+    value: &Cow<'t, str>,
+    replacement: AnchorHrefControlReplacement,
+) -> Cow<'t, str> {
+    let input = value.as_ref();
+    let mut output = String::with_capacity(input.len());
+    let mut changed = false;
+    for (index, character) in input.char_indices() {
+        if is_interior_anchor_href_control(input, index, character) {
+            match replacement {
+                AnchorHrefControlReplacement::Separator => output.push(' '),
+                AnchorHrefControlReplacement::PercentEncoded => {
+                    output.push_str(if character == '\u{001B}' {
+                        "%1B"
+                    } else {
+                        "%7F"
+                    });
+                }
+            }
+            changed = true;
+        } else {
+            output.push(character);
+        }
+    }
+    if changed {
+        Cow::Owned(output)
+    } else {
+        value.clone()
+    }
+}
+
 fn isolate_ids_preserving_interior_c0(id_string: &str) -> String {
     const PREFIX: &str = "u-";
     if id_string.is_empty() {
@@ -711,7 +756,11 @@ impl<'t> Arguments<'t> {
                 // placeholder, leaving the attribute explicitly empty.
                 map.insert_wikidot_relative_href(Cow::Borrowed(""));
             } else if wikidot_anchor_href_is_verbatim(href) {
-                let value = normalize_wikidot_html_attribute_value(href);
+                let prepared = replace_interior_anchor_href_controls(
+                    href,
+                    AnchorHrefControlReplacement::PercentEncoded,
+                );
+                let value = normalize_wikidot_html_attribute_value(&prepared);
                 let spaced = value.replace(' ', "%20");
                 let encoded = crate::url::percent_encode_non_ascii(&spaced);
                 map.insert_wikidot_relative_href(if encoded != value {
@@ -869,7 +918,11 @@ fn wikidot_anchor_href_is_verbatim(value: &str) -> bool {
 }
 
 fn normalize_wikidot_unsafe_anchor_href<'t>(value: &Cow<'t, str>) -> Cow<'t, str> {
-    let value = normalize_wikidot_html_attribute_value(value);
+    let prepared = replace_interior_anchor_href_controls(
+        value,
+        AnchorHrefControlReplacement::Separator,
+    );
+    let value = normalize_wikidot_html_attribute_value(&prepared);
     let nbsp_padded = value.starts_with('\u{00a0}') || value.ends_with('\u{00a0}');
     let value = if nbsp_padded {
         Cow::Owned(value.trim_matches('\u{00a0}').to_owned())
@@ -1070,5 +1123,55 @@ mod tests {
             .get_value::<u32>(&parser, "depth")
             .expect_err("malformed integer should fail");
         assert_eq!(error.kind(), ParseErrorKind::BlockMalformedArguments);
+    }
+
+    fn anchor_href(input: &str) -> String {
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let mut arguments = Arguments::new();
+        arguments.insert("href", Cow::Borrowed(input));
+        let attributes = arguments.to_wikidot_anchor_attribute_map(&settings);
+        attributes
+            .get()
+            .get("href")
+            .map(Cow::as_ref)
+            .unwrap_or("")
+            .to_owned()
+    }
+
+    #[test]
+    fn wikidot_anchor_href_hyphenates_interior_escape_delete_and_tab() {
+        assert_eq!(anchor_href("a\u{001b}b"), "a-b");
+        assert_eq!(anchor_href("a\u{007f}b"), "a-b");
+        assert_eq!(anchor_href("a\tb"), "a-b");
+        assert_eq!(anchor_href("a\nb"), "a-b");
+        assert_eq!(anchor_href("a\rb"), "a-b");
+    }
+
+    #[test]
+    fn wikidot_anchor_href_strips_edge_escape_delete() {
+        assert_eq!(anchor_href("\u{001b}ab"), "ab");
+        assert_eq!(anchor_href("ab\u{001b}"), "ab");
+        assert_eq!(anchor_href("\u{007f}ab"), "ab");
+        assert_eq!(anchor_href("ab\u{007f}"), "ab");
+    }
+
+    #[test]
+    fn wikidot_anchor_href_percent_encodes_interior_escape_delete_in_structured_url() {
+        assert_eq!(
+            anchor_href("http://example.com/p\u{001b}ath"),
+            "http://example.com/p%1Bath",
+        );
+        assert_eq!(
+            anchor_href("http://example.com/p\u{007f}ath"),
+            "http://example.com/p%7Fath",
+        );
+        assert_eq!(anchor_href("/x/a\u{001b}b"), "/x/a%1Bb");
+    }
+
+    #[test]
+    fn wikidot_anchor_href_keeps_other_controls_and_backslashes_stripped() {
+        assert_eq!(anchor_href("a\u{0000}b"), "ab");
+        assert_eq!(anchor_href("a\\b"), "ab");
+        assert_eq!(anchor_href("a-b"), "a-b");
     }
 }

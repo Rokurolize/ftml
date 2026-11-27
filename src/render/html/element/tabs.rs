@@ -1121,6 +1121,7 @@ fn tab_elements_nested_lift<'a, 't>(
 }
 
 fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
+    let view_index = ctx.next_wikidot_tabview_index();
     let depth = ctx.wikidot_tabview_depth();
     ctx.set_wikidot_tabview_depth(depth + 1);
     let (items, trailing) = split_bibliography_split_tail(items);
@@ -1339,6 +1340,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                                 ctx,
                                 item,
                                 &mut tab_index,
+                                view_index,
                                 multi_tab_recovery,
                                 Some(wikidot_tabview_row_tail_run(ytail.elements)),
                                 depth,
@@ -1352,6 +1354,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                                 ctx,
                                 item,
                                 &mut tab_index,
+                                view_index,
                                 multi_tab_recovery,
                                 Some(&elements[..pre_end]),
                                 depth,
@@ -1361,6 +1364,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                                 ctx,
                                 item,
                                 &mut tab_index,
+                                view_index,
                                 multi_tab_recovery,
                                 None,
                                 depth,
@@ -1374,6 +1378,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                                             ctx,
                                             panel,
                                             &mut tab_index,
+                                            view_index,
                                             multi_tab_recovery,
                                             None,
                                             depth,
@@ -1429,6 +1434,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                         ctx,
                         panel,
                         &mut tab_index,
+                        view_index,
                         multi_tab_recovery,
                         None,
                         depth,
@@ -1452,6 +1458,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                         ctx,
                         item,
                         &mut tab_index,
+                        view_index,
                         multi_tab_recovery,
                         None,
                         depth,
@@ -1471,6 +1478,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                             ctx,
                             item,
                             &mut tab_index,
+                            view_index,
                             multi_tab_recovery,
                             Some(&elements[post_start..]),
                             depth,
@@ -1481,6 +1489,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                             ctx,
                             item,
                             &mut tab_index,
+                            view_index,
                             multi_tab_recovery,
                             None,
                             depth,
@@ -1496,6 +1505,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                         ctx,
                         item,
                         &mut tab_index,
+                        view_index,
                         multi_tab_recovery,
                         None,
                         depth,
@@ -1555,6 +1565,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 ctx,
                 item,
                 &mut tab_index,
+                view_index,
                 multi_tab_recovery,
                 Some(&elements[post_start.min(elements.len())..]),
                 depth,
@@ -1565,6 +1576,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
                 ctx,
                 item,
                 &mut tab_index,
+                view_index,
                 multi_tab_recovery,
                 None,
                 depth,
@@ -1578,6 +1590,7 @@ fn render_wikidot_tabview(ctx: &mut HtmlContext, items: &[TabViewItem]) {
             ctx,
             item,
             &mut tab_index,
+            view_index,
             multi_tab_recovery,
             None,
             depth,
@@ -1747,13 +1760,14 @@ fn render_wikidot_tabview_yui_item(
     ctx: &mut HtmlContext,
     item: &TabViewItem,
     tab_index: &mut usize,
+    view_index: usize,
     multi_tab_recovery: bool,
     content_run: Option<&[Element]>,
     depth: usize,
 ) {
     match item {
         TabViewItem::Tab(tab) => {
-            let tab_id = format!("wiki-tab-0-{tab_index}");
+            let tab_id = format!("wiki-tab-{view_index}-{tab_index}");
             let index = *tab_index;
             *tab_index += 1;
             // Live closes an outermost panel right after a strayed inner

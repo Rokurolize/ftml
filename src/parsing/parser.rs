@@ -2738,6 +2738,18 @@ impl<'r, 't> Parser<'r, 't> {
         self.quote_body_cursor = Some(QuoteBodyCursor { required_depth, line_state: QuoteBodyLineState::PreparedContent { content_start: self.current().span.start }, literal_residual_quotes: true });
     }
 
+    pub(crate) fn quote_body_current_is_literal_residual(&self) -> bool {
+        matches!(
+            self.quote_body_cursor,
+            Some(QuoteBodyCursor {
+                line_state: QuoteBodyLineState::PreparedContent { content_start },
+                literal_residual_quotes: true,
+                ..
+            }) if content_start == self.current().span.start
+                && self.current().token == Token::Quote
+        )
+    }
+
     #[rustfmt::skip]
     pub(crate) fn quote_body_close_allowed_here(&self) -> bool {
         matches!(self.quote_body_cursor, Some(QuoteBodyCursor { line_state: QuoteBodyLineState::PreparedContent { content_start }, .. }) if content_start == self.current().span.start)

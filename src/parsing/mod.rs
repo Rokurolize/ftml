@@ -72,8 +72,8 @@ use crate::next_index::{Incrementer, NextIndex};
 use crate::settings::WikitextSettings;
 use crate::tokenizer::Tokenization;
 use crate::tree::{
-    AttributeMap, BibliographyList, CodeBlock, Element, LinkLabel, LinkLocation,
-    LinkType, ListItem, ListType, SyntaxTree,
+    AttributeMap, BibliographyList, CodeBlock, ContainerType, Element, LinkLabel,
+    LinkLocation, LinkType, ListItem, ListType, SyntaxTree,
 };
 use std::borrow::Cow;
 
@@ -345,6 +345,14 @@ where
                 inline_scope::strip_list_item_blank_line_markers(&mut elements);
                 inline_format::unwrap_frame_cut_marker_paragraphs(&mut elements);
                 inline_scope::strip_post_list_blank_gap_markers(&mut elements);
+                unwrap_wikidot_bare_div_definition_paragraph(
+                    &mut elements,
+                    tokenization.full_text().inner(),
+                );
+                restore_wikidot_quoted_div_residuals(
+                    &mut elements,
+                    tokenization.full_text().inner(),
+                );
                 for footnote in &mut footnotes {
                     inline_scope::strip_list_item_blank_line_markers(footnote);
                     inline_scope::strip_post_list_blank_gap_markers(footnote);
@@ -1116,6 +1124,178 @@ where
         bibliographies,
         wikidot_row_suffix,
     }
+}
+
+fn unwrap_wikidot_bare_div_definition_paragraph<'t>(
+    elements: &mut Vec<Element<'t>>,
+    source: &str,
+) {
+    let mut lines = source.split('\n');
+    let Some(div_line) = lines.next() else {
+        return;
+    };
+    let lower = div_line.to_ascii_lowercase();
+    if !lower.starts_with("[[div]]") || div_line.len() == "[[div]]".len() {
+        return;
+    }
+    if !lines.next().is_some_and(|line| line.starts_with(": ")) {
+        return;
+    }
+    if elements.len() != 1 {
+        return;
+    }
+    let is_paragraph = matches!(
+        elements.first(),
+        Some(Element::Container(container)) if container.ctype() == ContainerType::Paragraph
+    );
+    if !is_paragraph {
+        return;
+    }
+    let Some(Element::Container(container)) = elements.pop() else {
+        return;
+    };
+    *elements = Vec::from(container);
+}
+
+fn wikidot_spaced_quote_content(line: &str, depth: usize) -> Option<&str> {
+    let mut rest = line;
+    for _ in 0..depth {
+        rest = rest.strip_prefix('>')?.strip_prefix(' ')?;
+    }
+    Some(rest)
+}
+
+fn wikidot_spaced_quote_depth(line: &str) -> usize {
+    let mut rest = line;
+    let mut depth = 0usize;
+    while let Some(after_quote) = rest.strip_prefix('>') {
+        let Some(after_space) = after_quote.strip_prefix(' ') else {
+            break;
+        };
+        depth += 1;
+        rest = after_space;
+    }
+    depth
+}
+
+fn wikidot_quoted_div_residual_depth(source: &str) -> Option<usize> {
+    let mut lines = source.lines();
+    let open = lines.next()?;
+    let depth = wikidot_spaced_quote_depth(open);
+    if depth < 2 {
+        return None;
+    }
+    let content = wikidot_spaced_quote_content(open, depth)?;
+    let lower = content.to_ascii_lowercase();
+    if !(lower.starts_with("[[div]]") || lower.starts_with("[[div ")) {
+        return None;
+    }
+    let mut body_lines = 0usize;
+    for line in lines {
+        if let Some(close) = wikidot_spaced_quote_content(line, depth) {
+            if close.eq_ignore_ascii_case("[[/div]]") {
+                return (body_lines > 0).then_some(depth);
+            }
+            body_lines += 1;
+        }
+    }
+    None
+}
+
+fn replace_wikidot_close_residual_text(
+    elements: &mut [Element],
+    close_text: &str,
+) -> bool {
+    for element in elements.iter_mut().rev() {
+        match element {
+            Element::Container(container)
+                if container.ctype() == ContainerType::Paragraph =>
+            {
+                let children = container.elements_mut();
+                if children.len() >= 2
+                    && matches!(children[children.len() - 2], Element::LineBreak)
+                    && matches!(children.last(), Some(Element::Text(text)) if text.as_ref() == ">")
+                {
+                    let last = children.last_mut().expect("paragraph close text exists");
+                    *last = Element::Text(Cow::Owned(close_text.to_owned()));
+                    return true;
+                }
+            }
+            Element::Container(container) => {
+                if replace_wikidot_close_residual_text(
+                    container.elements_mut(),
+                    close_text,
+                ) {
+                    return true;
+                }
+            }
+            _ => {}
+        }
+    }
+    false
+}
+
+fn restore_wikidot_quoted_div_residuals_in_elements(
+    elements: &mut Vec<Element>,
+    close_text: &str,
+) -> bool {
+    for element in elements.iter_mut() {
+        let Element::Container(container) = element else {
+            continue;
+        };
+        if container.ctype() == ContainerType::Blockquote {
+            let children = container.elements_mut();
+            for index in 0..children.len() {
+                let is_div = matches!(
+                    children.get(index),
+                    Some(Element::Container(div)) if div.ctype() == ContainerType::Div
+                );
+                if is_div
+                    && index > 0
+                    && matches!(
+                        children.get(index - 1),
+                        Some(Element::Text(text)) if text.as_ref() == ">"
+                    )
+                {
+                    children.insert(index, Element::Text(Cow::Borrowed(" ")));
+                    if let Some(Element::Container(div)) = children.get_mut(index + 1) {
+                        replace_wikidot_close_residual_text(
+                            div.elements_mut(),
+                            close_text,
+                        );
+                    }
+                    return true;
+                }
+            }
+        }
+        if restore_wikidot_quoted_div_residuals_in_elements(
+            container.elements_mut(),
+            close_text,
+        ) {
+            return true;
+        }
+    }
+    false
+}
+
+fn restore_wikidot_quoted_div_residuals<'t>(
+    elements: &mut Vec<Element<'t>>,
+    source: &str,
+) {
+    let Some(depth) = wikidot_quoted_div_residual_depth(source) else {
+        return;
+    };
+    if depth < 3 {
+        return;
+    }
+    let mut close_text = String::new();
+    for index in 0..depth - 1 {
+        if index > 0 {
+            close_text.push(' ');
+        }
+        close_text.push('>');
+    }
+    restore_wikidot_quoted_div_residuals_in_elements(elements, &close_text);
 }
 
 fn build_toc_list_element(

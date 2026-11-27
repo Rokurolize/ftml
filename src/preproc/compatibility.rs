@@ -577,6 +577,8 @@ pub(super) fn substitute_wikidot(text: &mut String) {
     close_unclosed_div_after_literal_iftags(&mut lines, &literal_lines);
     canonicalize_extra_block_head_closers(&mut lines, &literal_lines);
     *text = lines.concat();
+    preserve_wikidot_div_label_close_link_boundary(text);
+    protect_wikidot_interrupted_quoted_div_open(text);
     join_wikidot_div_prefilter(text);
 }
 
@@ -2783,6 +2785,127 @@ fn literal_block_close(lower: &str) -> Option<&'static str> {
 /// bodies are opaque here. It also only matters once a real div block opened:
 /// joining stray closers next to non-div text is invisible to the output and the
 /// unmatched-opener guard keeps live's Iframe-token swallows intact.
+fn preserve_wikidot_div_label_close_link_boundary(text: &mut String) {
+    if !text.contains("[[") {
+        return;
+    }
+    let literal_ranges = super::whitespace::wikidot_literal_body_ranges(text);
+    let mut insertions = Vec::new();
+    let lower = text.to_ascii_lowercase();
+    let mut cursor = 0usize;
+    while let Some(relative) = lower[cursor..].find("[[div") {
+        let div_start = cursor + relative;
+        let line_end = lower[div_start..]
+            .find('\n')
+            .map_or(lower.len(), |offset| div_start + offset);
+        let line = &lower[div_start..line_end];
+        if let Some(inner_relative) = line.find("[[/") {
+            let inner_start = div_start + inner_relative;
+            if let Some(inner_close_relative) =
+                lower[inner_start + 3..line_end].find("]]")
+            {
+                let inner_close_end = inner_start + 3 + inner_close_relative + 2;
+                let after = lower.as_bytes().get(inner_close_end).copied();
+                let label = lower.as_bytes().get(inner_close_end + 1).copied();
+                if matches!(after, Some(b' ' | b'\t'))
+                    && label
+                        .is_some_and(|byte| !byte.is_ascii_whitespace() && byte != b']')
+                    && lower[inner_close_end..line_end].contains("]]")
+                    && !literal_ranges
+                        .iter()
+                        .any(|range| range.contains(&div_start))
+                {
+                    insertions.push(inner_close_end);
+                }
+            }
+        }
+        cursor = div_start + 5;
+    }
+    if insertions.is_empty() {
+        return;
+    }
+    for insertion in insertions.into_iter().rev() {
+        text.insert(insertion, '\u{0001}');
+    }
+}
+
+fn quoted_line_content_start(line: &str) -> Option<usize> {
+    let bytes = line.as_bytes();
+    let mut index = 0usize;
+    while matches!(bytes.get(index), Some(b' ' | b'\t')) {
+        index += 1;
+    }
+    if bytes.get(index) != Some(&b'>') {
+        return None;
+    }
+    index += 1;
+    if bytes.get(index) == Some(&b' ') {
+        index += 1;
+    }
+    Some(index)
+}
+
+fn quoted_spaced_div_close(line: &str) -> bool {
+    let Some(start) = quoted_line_content_start(line) else {
+        return false;
+    };
+    let content = line[start..].trim_end_matches([' ', '\t']);
+    let lowered = content.to_ascii_lowercase();
+    let Some(inner) = lowered
+        .strip_prefix("[[/div")
+        .and_then(|tail| tail.strip_suffix("]]"))
+    else {
+        return false;
+    };
+    !inner.is_empty() && inner.bytes().all(|byte| byte.is_ascii_whitespace())
+}
+
+fn protect_wikidot_interrupted_quoted_div_open(text: &mut String) {
+    if !text.contains('>') || !text.contains("[[div") {
+        return;
+    }
+    let lower = text.to_ascii_lowercase();
+    let lines = lower.split_inclusive('\n').collect::<Vec<_>>();
+    let mut offsets = Vec::with_capacity(lines.len());
+    let mut offset = 0usize;
+    for line in &lines {
+        offsets.push(offset);
+        offset += line.len();
+    }
+
+    let mut insertions = Vec::new();
+    for (index, line) in lines.iter().enumerate() {
+        let line = line.trim_end_matches('\n');
+        let Some(content_start) = quoted_line_content_start(line) else {
+            continue;
+        };
+        if !line[content_start..].starts_with("[[div]]") {
+            continue;
+        }
+        let mut interrupted = false;
+        let mut spaced_close = false;
+        for following in &lines[index + 1..] {
+            let following = following.trim_end_matches('\n');
+            if quoted_spaced_div_close(following) {
+                spaced_close = true;
+                break;
+            }
+            if following.trim().is_empty() {
+                continue;
+            }
+            if quoted_line_content_start(following).is_none() {
+                interrupted = true;
+            }
+        }
+        if interrupted && spaced_close {
+            insertions.push(offsets[index] + content_start);
+        }
+    }
+    for insertion in insertions.into_iter().rev() {
+        text.insert(insertion, '\u{0001}');
+    }
+}
+
 fn join_wikidot_div_prefilter(text: &mut String) {
     if !text.contains("[[") {
         return;
@@ -2797,6 +2920,7 @@ fn join_wikidot_div_prefilter(text: &mut String) {
     let mut output = String::with_capacity(text.len());
     let mut copied = 0usize;
     let mut open_divs: Vec<bool> = Vec::new();
+    let mut saw_div_opener = false;
     let mut scanned = 0usize;
     while let Some(relative) = text[scanned..].find("[[") {
         let marker = scanned + relative;
@@ -2805,21 +2929,32 @@ fn join_wikidot_div_prefilter(text: &mut String) {
             continue;
         }
         if is_wikidot_div_closer_at(text, marker) {
-            let Some(standalone) = open_divs.pop() else {
-                continue;
+            let standalone = match open_divs.pop() {
+                Some(standalone) => standalone,
+                None => {
+                    let before = text[..marker].to_ascii_lowercase();
+                    if saw_div_opener || before.contains("[[iframe") {
+                        continue;
+                    }
+                    true
+                }
             };
             if !standalone {
                 continue;
             }
             let mut next = marker + "[[/div]]".len();
-            while text
-                .as_bytes()
-                .get(next)
-                .is_some_and(u8::is_ascii_whitespace)
-            {
+            let mut crosses_line = false;
+            while let Some(byte) = text.as_bytes().get(next).copied() {
+                if !byte.is_ascii_whitespace() {
+                    break;
+                }
+                crosses_line |= matches!(byte, b'\r' | b'\n');
                 next += 1;
             }
-            if !in_literal(next) && wikidot_div_opener_prefix_at(text, next) {
+            if crosses_line
+                && !in_literal(next)
+                && wikidot_div_opener_prefix_at(text, next)
+            {
                 output.push_str(&text[copied..marker]);
                 output.push_str("[[/div]][[div");
                 copied = next + "[[div".len();
@@ -2838,6 +2973,7 @@ fn join_wikidot_div_prefilter(text: &mut String) {
             continue;
         }
         if is_wikidot_div_opener_at(text, marker) {
+            saw_div_opener = true;
             open_divs.push(wikidot_div_opener_is_standalone(text, marker));
         }
     }

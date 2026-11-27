@@ -95,6 +95,7 @@ fn parse_definition_list<'r, 't>(
     let mut escape: Option<SplitEscapeLayout<'t>> = None;
     let mut residue_vanished = false;
     let mut residue_span_close = None;
+    let mut residue_collapsible_body = None;
 
     loop {
         if parser.settings().layout.legacy() && starts_definition_item(parser) {
@@ -113,7 +114,12 @@ fn parse_definition_list<'r, 't>(
                 None => {}
             }
         }
-        let next = match scan_item(parser, &mut escape, &mut residue_span_close) {
+        let next = match scan_item(
+            parser,
+            &mut escape,
+            &mut residue_span_close,
+            &mut residue_collapsible_body,
+        ) {
             Ok(success) => success.chain(&mut errors, &mut paragraph_safe),
             Err(error) => {
                 if !items.is_empty()
@@ -146,10 +152,17 @@ fn parse_definition_list<'r, 't>(
         if residue_vanished {
             parser.mark_wikidot_colon_line_vanished();
         }
+        let mut recovered = Vec::new();
+        if let Some(body) = residue_collapsible_body {
+            recovered.extend(body);
+        }
         if let Some(close) = residue_span_close {
-            ok!(close, errors)
-        } else {
-            ok!(false; Elements::None, errors)
+            recovered.push(close);
+        }
+        match recovered.len() {
+            0 => ok!(false; Elements::None, errors),
+            1 => ok!(recovered.pop().expect("one recovered element"), errors),
+            _ => ok!(false; Elements::Multiple(recovered), errors),
         }
     } else if parser.bibliography_split_tail() {
         let elements =
@@ -392,6 +405,7 @@ fn scan_item<'r, 't>(
     parser: &mut Parser<'r, 't>,
     escape: &mut Option<SplitEscapeLayout<'t>>,
     residue_span_close: &mut Option<Element<'t>>,
+    residue_collapsible_body: &mut Option<Vec<Element<'t>>>,
 ) -> ParseResult<'r, 't, Option<(DefinitionListItem<'t>, bool)>>
 where
     'r: 't,
@@ -440,11 +454,12 @@ where
             }
             Some((key_elements, key_string, value_elements, last))
         }
-        Ok(KeyScan::Residue {
-            swallowed_span_close,
-        }) => {
+        Ok(KeyScan::Residue(mut residue)) => {
             if span_open_at_line_start {
-                *residue_span_close = swallowed_span_close;
+                *residue_span_close = residue.swallowed_span_close.take();
+            }
+            if parser.settings().layout.legacy() && residue.collapsible_body.is_some() {
+                *residue_collapsible_body = residue.collapsible_body.take();
             }
             None
         }
@@ -480,9 +495,15 @@ fn parse_item<'r, 't>(
     let mut errors = Vec::new();
     let mut paragraph_safe = false;
     let mut residue_span_close = None;
+    let mut residue_collapsible_body = None;
 
-    let item = scan_item(parser, &mut None, &mut residue_span_close)?
-        .chain(&mut errors, &mut paragraph_safe);
+    let item = scan_item(
+        parser,
+        &mut None,
+        &mut residue_span_close,
+        &mut residue_collapsible_body,
+    )?
+    .chain(&mut errors, &mut paragraph_safe);
     match item {
         Some(pair) => ok!(false; pair, errors),
         None => Err(parser.make_err(ParseErrorKind::RuleFailed)),
@@ -734,14 +755,17 @@ fn has_definition_separator<'r, 't>(parser: &Parser<'r, 't>) -> bool {
     }
 }
 
+struct ResidueElements<'t> {
+    swallowed_span_close: Option<Element<'t>>,
+    collapsible_body: Option<Vec<Element<'t>>>,
+}
+
 enum KeyScan<'t> {
     Separator {
         key_elements: Vec<Element<'t>>,
         key_string: std::borrow::Cow<'t, str>,
     },
-    Residue {
-        swallowed_span_close: Option<Element<'t>>,
-    },
+    Residue(Box<ResidueElements<'t>>),
 }
 
 fn collect_key_scanning<'r, 't>(
@@ -822,9 +846,10 @@ where
                     if last.token == Token::LineBreak {
                         parser.step()?;
                     }
-                    return Ok(KeyScan::Residue {
-                        swallowed_span_close: take_swallowed_span_close(key_elements),
-                    });
+                    return Ok(KeyScan::Residue(Box::new(ResidueElements {
+                        swallowed_span_close: take_swallowed_span_close(&key_elements),
+                        collapsible_body: take_swallowed_collapsible_body(&key_elements),
+                    })));
                 }
 
                 crossed = true;
@@ -839,24 +864,51 @@ where
                 parser.step()?;
             }
             Token::InputEnd => {
-                return Ok(KeyScan::Residue {
-                    swallowed_span_close: take_swallowed_span_close(key_elements),
-                });
+                return Ok(KeyScan::Residue(Box::new(ResidueElements {
+                    swallowed_span_close: take_swallowed_span_close(&key_elements),
+                    collapsible_body: take_swallowed_collapsible_body(&key_elements),
+                })));
             }
             _ => return Err(parser.make_err(ParseErrorKind::RuleFailed)),
         }
     }
 }
 
-fn take_swallowed_span_close<'t>(elements: Vec<Element<'t>>) -> Option<Element<'t>> {
+fn take_swallowed_span_close<'t>(elements: &[Element<'t>]) -> Option<Element<'t>> {
     for element in elements {
         match element {
             Element::Partial(PartialElement::InlineSpanOpen(..)) => return None,
-            Element::Partial(PartialElement::InlineSpanClose(_)) => return Some(element),
+            Element::Partial(PartialElement::InlineSpanClose(_)) => {
+                return Some(element.clone());
+            }
             _ => {}
         }
     }
     None
+}
+
+fn take_swallowed_collapsible_body<'t>(
+    elements: &[Element<'t>],
+) -> Option<Vec<Element<'t>>> {
+    let mut recovered = Vec::new();
+    let mut found = false;
+    for element in elements {
+        match element {
+            Element::Collapsible { elements: body, .. } => {
+                if let [Element::Container(container)] = body.as_slice()
+                    && container.ctype() == crate::tree::ContainerType::Paragraph
+                {
+                    recovered.extend(container.elements().iter().cloned());
+                } else {
+                    recovered.extend(body.iter().cloned());
+                }
+                found = true;
+            }
+            Element::LineBreak if found => recovered.push(Element::LineBreak),
+            _ => {}
+        }
+    }
+    found.then_some(recovered)
 }
 
 fn build_key_string<'t>(

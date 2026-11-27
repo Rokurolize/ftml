@@ -1748,10 +1748,15 @@ fn join_continued_lines(
             let in_html_body = html_body_ranges
                 .get(html_body_index)
                 .is_some_and(|range| range.contains(&index));
-            if in_raw_body
-                || (wikidot_compatibility
-                    && wikidot_continued_div_opener(&text[index + 1..]))
+            let continued_div_opener =
+                wikidot_compatibility && wikidot_continued_div_opener(&text[index + 1..]);
+            if continued_div_opener
+                && !wikidot_continued_div_has_close(&text[index + 1..])
             {
+                let removed = buffer.pop();
+                debug_assert_eq!(removed, Some('\\'));
+                buffer.push(' ');
+            } else if in_raw_body || continued_div_opener {
                 buffer.push(character);
             } else if wikidot_compatibility
                 && buffer.ends_with("\\\\")
@@ -1968,6 +1973,10 @@ fn wikidot_continued_div_opener(text: &str) -> bool {
     let line = text.split_once('\n').map_or(text, |(line, _)| line);
     let marker = line.trim_matches([' ', '\t']);
     WIKIDOT_CONTINUED_DIV_OPENER.is_match(marker)
+}
+
+fn wikidot_continued_div_has_close(text: &str) -> bool {
+    text.to_ascii_lowercase().contains("[[/div]]")
 }
 
 fn replace_leading_spaces(text: &mut String) {

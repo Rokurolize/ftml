@@ -853,7 +853,9 @@ fn try_consume_fn<'r, 't>(
         return ok!(false; Elements::None);
     }
 
-    if parser.wikidot_footnote_zone_blocks(parser.current().span.start) {
+    if parser.wikidot_footnote_zone_blocks(parser.current().span.start)
+        || parser.quote_body_current_is_literal_residual()
+    {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
 

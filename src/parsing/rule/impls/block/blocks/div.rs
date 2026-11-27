@@ -43,6 +43,74 @@ use std::borrow::Cow;
 
 const WIKIJUMP_DIV_FAILURE_CACHE: &str = "wikijump-div-parse-failure";
 
+fn wikidot_attributed_inner_div_spends_outer_close(
+    source: &str,
+    head_end: usize,
+) -> bool {
+    fn line_opener_is_attributed(bytes: &[u8], mut index: usize) -> Option<usize> {
+        while matches!(bytes.get(index), Some(b' ' | b'\t')) {
+            index += 1;
+        }
+        if !bytes
+            .get(index..index + 5)
+            .is_some_and(|slice| slice.eq_ignore_ascii_case(b"[[div"))
+            || !matches!(bytes.get(index + 5), Some(b' ' | b'\t' | b']'))
+        {
+            return None;
+        }
+        let mut end = index + 5;
+        while end + 1 < bytes.len() && !(bytes[end] == b']' && bytes[end + 1] == b']') {
+            if bytes[end] == b'\n' || bytes[end] == b'\r' {
+                return None;
+            }
+            end += 1;
+        }
+        if end + 1 >= bytes.len() {
+            return None;
+        }
+        let bare = index + 5 == end;
+        let line_tail = &bytes[end + 2..]
+            .iter()
+            .take_while(|byte| **byte != b'\n' && **byte != b'\r')
+            .copied()
+            .collect::<Vec<_>>();
+        let trailing = line_tail.iter().any(|byte| !byte.is_ascii_whitespace());
+        let closes_on_line = line_tail
+            .windows(8)
+            .any(|window| window.eq_ignore_ascii_case(b"[[/div]]"));
+        (!bare && trailing && !closes_on_line).then_some(end + 2)
+    }
+
+    let bytes = source.as_bytes();
+    let mut index = head_end;
+    let mut inner_open = 0usize;
+    let mut spent_inner_close = false;
+    let mut line_start = true;
+    while index < bytes.len() {
+        if line_start && let Some(next) = line_opener_is_attributed(bytes, index) {
+            inner_open += 1;
+            index = next;
+            line_start = false;
+            continue;
+        }
+        if bytes
+            .get(index..index + 8)
+            .is_some_and(|slice| slice.eq_ignore_ascii_case(b"[[/div]]"))
+        {
+            if inner_open == 0 {
+                return false;
+            }
+            inner_open -= 1;
+            spent_inner_close = true;
+            index += 8;
+            continue;
+        }
+        line_start = bytes[index] == b'\n';
+        index += 1;
+    }
+    inner_open > 0 || spent_inner_close
+}
+
 pub const BLOCK_DIV: BlockRule = BlockRule {
     name: "block-div",
     accepts_names: &["div"],
@@ -327,6 +395,22 @@ fn wikidot_next_line_opens_div(source: &str, mut position: usize) -> bool {
         )
 }
 
+fn wikidot_div_head_recovers_as_plain_fallback(
+    parser: &Parser<'_, '_>,
+    owner_start: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let head_end = parser.current().span.start;
+    let Some(head) = source.get(owner_start..head_end) else {
+        return false;
+    };
+    if head.contains(['\r', '\n']) {
+        return true;
+    }
+    let head_end = head.find("]]").unwrap_or(head.len());
+    head[..head_end].contains("[[/")
+}
+
 fn wikidot_div_line_has_segment(parser: &Parser<'_, '_>, owner_start: usize) -> bool {
     let source = parser.full_text().inner();
     let line_start = source[..owner_start]
@@ -353,7 +437,22 @@ fn wikidot_nested_div_literal<'t>(
     let line_broken = line_start > 0
         && source.as_bytes()[line_start - 1] == b'\n'
         && source[line_start..opener_start].trim().is_empty();
-    if parser.wikidot_line_follows_block() {
+    let after = source[literal_end..]
+        .strip_prefix("\r\n")
+        .or_else(|| source[literal_end..].strip_prefix('\n'))
+        .unwrap_or_default();
+    let closes_next = after
+        .trim_start_matches([' ', '\t'])
+        .to_ascii_lowercase()
+        .starts_with("[[/div]]");
+    let trailing_break = trailing_break && !closes_next;
+    let inline_after_outer_div_line = !trailing_break
+        && source[..opener_start]
+            .trim_end_matches(['\r', '\n'])
+            .rsplit(['\r', '\n'])
+            .next()
+            .is_some_and(|line| line.trim().eq_ignore_ascii_case("[[div]]"));
+    if parser.wikidot_line_follows_block() && !inline_after_outer_div_line {
         parser.mark_wikidot_bare_div_literal();
         let start = if line_broken {
             line_start - 1
@@ -367,18 +466,6 @@ fn wikidot_nested_div_literal<'t>(
             (Elements::Multiple(vec![literal, Element::LineBreak]), false)
         } else {
             (Elements::Single(literal), false)
-        }
-    } else if line_broken {
-        let literal = Element::Text(discard_wikidot_controls(
-            elide_comments_from_literal(&source[opener_start..literal_end]),
-        ));
-        if trailing_break {
-            (
-                Elements::Multiple(vec![Element::LineBreak, literal, Element::LineBreak]),
-                true,
-            )
-        } else {
-            (Elements::Multiple(vec![Element::LineBreak, literal]), true)
         }
     } else {
         let literal = Element::Text(discard_wikidot_controls(
@@ -426,6 +513,7 @@ where
         && parser.has_body_end_block_on_line(&BLOCK_DIV)
         && (!flag_score || inline_scored_line_literal)
         && !wikidot_div_line_has_segment(parser, owner_start)
+        && !wikidot_div_head_recovers_as_plain_fallback(parser, owner_start)
     {
         let line_start = source[..owner_start]
             .rfind('\n')
@@ -773,6 +861,49 @@ fn wikidot_prefix_has_literal_block_opener<'t>(
     hay.contains(&needle)
 }
 
+fn wikidot_div_has_plain_opener_listed_close(
+    source: &str,
+    body_start: usize,
+    closer: usize,
+) -> bool {
+    let body = source.get(body_start..closer).unwrap_or("");
+    let mut lines = body.lines().enumerate().collect::<Vec<_>>();
+    lines.retain(|(_, line)| !line.trim().is_empty());
+    for (index, opener_line) in &lines {
+        let opener = opener_line.trim();
+        let Some(name) = opener
+            .strip_prefix("[[")
+            .and_then(|inner| inner.strip_suffix("]]"))
+        else {
+            continue;
+        };
+        if name.starts_with('/')
+            || name.is_empty()
+            || !name
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+        {
+            continue;
+        }
+        let close = format!("[[/{}]]", name.to_ascii_lowercase());
+        if lines.iter().skip(index + 1).any(|(_, line)| {
+            let trimmed = line.trim_start();
+            let Some(marked) = trimmed
+                .strip_prefix("* ")
+                .or_else(|| trimmed.strip_prefix("# "))
+            else {
+                return false;
+            };
+            !trimmed.starts_with("** ")
+                && !trimmed.starts_with("## ")
+                && marked.trim().eq_ignore_ascii_case(&close)
+        }) {
+            return true;
+        }
+    }
+    false
+}
+
 fn wikidot_div_try_hoist_trailing_literal_close_lists<'t>(
     elements: &mut Vec<Element<'t>>,
     attributes: &AttributeMap<'t>,
@@ -873,6 +1004,33 @@ fn unwrap_wikidot_scored_div_paragraph_after_blockquote(elements: &mut Vec<Eleme
             index += 1;
         }
     }
+}
+
+fn wrap_wikidot_bare_inner_div_literal_paragraph(elements: &mut Vec<Element<'_>>) {
+    if elements.len() < 2
+        || !elements
+            .iter()
+            .all(|element| matches!(element, Element::Text(_)))
+    {
+        return;
+    }
+    let mut combined = String::new();
+    for element in elements.iter() {
+        let Element::Text(text) = element else {
+            return;
+        };
+        combined.push_str(text);
+    }
+    let lower = combined.to_ascii_lowercase();
+    if !lower.starts_with("[[div]]") || lower.len() == "[[div]]".len() {
+        return;
+    }
+    let wrapped = std::mem::take(elements);
+    elements.push(Element::Container(Container::new(
+        ContainerType::Paragraph,
+        wrapped,
+        AttributeMap::new(),
+    )));
 }
 
 fn normalize_wikidot_div_elements(
@@ -995,6 +1153,7 @@ fn normalize_wikidot_div_elements(
         return;
     }
 
+    wrap_wikidot_bare_inner_div_literal_paragraph(elements);
     if matches!(elements.last(), Some(Element::LineBreak)) {
         elements.pop();
     }
@@ -1238,6 +1397,23 @@ fn wikidot_div_head_line_quote_depth(
         .rfind('\n')
         .map_or(0, |index| index + 1);
     crate::preproc::quote_depth_and_body(&source[line_start..opener_start]).0
+}
+
+fn wikidot_div_body_has_deeper_quote_line(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+    head_depth: usize,
+) -> bool {
+    let Some(pair) = parser.wikidot_block_pair_at_head_byte(opener_start) else {
+        return false;
+    };
+    let source = parser.full_text().inner();
+    let body_start = parser.current().span.start;
+    let Some(body) = source.get(body_start..pair.closer_byte) else {
+        return false;
+    };
+    body.lines()
+        .any(|line| crate::preproc::quote_depth_and_body(line).0 > head_depth)
 }
 
 fn quoted_list_item_holds_only_this_div(
@@ -1500,6 +1676,13 @@ fn parse_fn<'r, 't>(
     let follows_inline_structural_close =
         wikidot_div_follows_inline_structural_close(parser, body_start);
     if parser.settings().layout.legacy()
+        && !parser.in_wikidot_div_body()
+        && body_start == BlockBodyStart::NextPhysicalLine
+        && wikidot_attributed_inner_div_spends_outer_close(source, head_end)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
         && parser.settings().mode != WikitextMode::List
         && !parser.in_wikidot_div_body()
         && !flag_score
@@ -1685,10 +1868,15 @@ fn parse_fn<'r, 't>(
     let parse_as_paragraphs =
         wrap_paragraphs || parser.settings().layout.legacy() && flag_score;
     let absorb_before_body = parser.wikidot_row_absorb_div_close();
+    let head_line_quote_depth = wikidot_div_head_line_quote_depth(parser, opener_start);
     let residual_depth_head = parser.settings().layout.legacy()
         && parser.in_native_blockquote_line()
-        && wikidot_div_head_line_quote_depth(parser, opener_start)
-            > parser.native_blockquote_depth().unwrap_or(0);
+        && (head_line_quote_depth > parser.native_blockquote_depth().unwrap_or(0)
+            || wikidot_div_body_has_deeper_quote_line(
+                parser,
+                opener_start,
+                head_line_quote_depth,
+            ));
     let body = if residual_depth_head {
         parser.get_body_elements_with_literal_quote_context(
             &BLOCK_DIV,
@@ -1769,17 +1957,29 @@ fn parse_fn<'r, 't>(
         }
     }
 
+    let closer_byte = parser
+        .wikidot_block_pair_at_head_byte(opener_start)
+        .map(|pair| pair.closer_byte)
+        .unwrap_or(body_end_byte);
     let mut attributes = wikidot_div_head_attributes(parser, &mut arguments);
     arguments.insert_explicit_empty_marker(&mut attributes);
-    let mut hoisted = if parser.settings().layout.legacy() {
-        wikidot_div_try_hoist_trailing_literal_close_lists(
-            &mut elements,
-            &attributes,
-            flag_score,
-        )
-    } else {
-        None
-    };
+    let keep_plain_opener_listed_close_inside = parser.settings().layout.legacy()
+        && attributes.get().is_empty()
+        && wikidot_div_has_plain_opener_listed_close(
+            parser.full_text().inner(),
+            body_start_byte,
+            closer_byte,
+        );
+    let mut hoisted =
+        if parser.settings().layout.legacy() && !keep_plain_opener_listed_close_inside {
+            wikidot_div_try_hoist_trailing_literal_close_lists(
+                &mut elements,
+                &attributes,
+                flag_score,
+            )
+        } else {
+            None
+        };
     if parser.settings().layout.legacy()
         && !flag_score
         && attributes.get().is_empty()

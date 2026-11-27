@@ -1,0 +1,23 @@
+{
+    "elements": [
+        {
+            "element": "text",
+            "data": "[["
+        },
+        {
+            "element": "text",
+            "data": "div"
+        },
+        {
+            "element": "text",
+            "data": "]]"
+        },
+        {
+            "element": "text",
+            "data": "a"
+        },
+        {
+            "element": "line-break"
+        }
+    ]
+}

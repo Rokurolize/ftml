@@ -1754,6 +1754,70 @@ impl<'t> Scanner<'t> {
         }
     }
 
+    fn defeating_attributed_div_opener_in_body(&self, pair: &WikidotBlockPair) -> bool {
+        if pair.kind != WikidotBlockKind::Div {
+            return false;
+        }
+        let Some(head_end_token) = pair
+            .head_end
+            .checked_sub(1)
+            .and_then(|index| self.tokens.get(index))
+        else {
+            return false;
+        };
+        let closer_byte = self.tokens[pair.closer].span.start;
+        let Some(body) = self.source.get(head_end_token.span.end..closer_byte) else {
+            return false;
+        };
+        let lower = body.to_ascii_lowercase();
+        let mut openers = 0usize;
+        for line in lower.lines() {
+            let line = line.trim_start_matches([' ', '\t']);
+            let Some(rest) = line.strip_prefix("[[div") else {
+                continue;
+            };
+            if !rest.starts_with([' ', '\t', ']']) {
+                continue;
+            }
+            let Some(close) = rest.find("]]") else {
+                continue;
+            };
+            let bare = close == 0;
+            let trailing = !rest[close + 2..].trim().is_empty();
+            let closes_on_line = rest[close + 2..].contains("[[/div]]");
+            if !bare && trailing && !closes_on_line {
+                openers += 1;
+            }
+        }
+        let closes = self.source[head_end_token.span.end..]
+            .to_ascii_lowercase()
+            .matches("[[/div]]")
+            .count();
+        openers > 0 && closes <= openers
+    }
+
+    fn spaced_close_head(&self, closer_index: usize, kind: WikidotBlockKind) -> bool {
+        if kind != WikidotBlockKind::Div {
+            return false;
+        }
+        let start = self.tokens[closer_index].span.start;
+        let Some(rest) = self.source.get(start..) else {
+            return false;
+        };
+        let Some(rest) = rest.strip_prefix("[[/") else {
+            return false;
+        };
+        let name_len = rest
+            .bytes()
+            .take_while(|byte| {
+                byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'=')
+            })
+            .count();
+        rest.as_bytes()
+            .get(name_len)
+            .is_some_and(|byte| matches!(*byte, b' ' | b'\t'))
+    }
+
     fn closer_valid(
         &self,
         kind: WikidotBlockKind,
@@ -1817,6 +1881,26 @@ impl<'t> Scanner<'t> {
         for head in dropped_heads {
             self.head_event_bytes.remove(&head);
         }
+        let defeating_attributed_div_heads = self
+            .pairs
+            .iter()
+            .filter(|pair| self.defeating_attributed_div_opener_in_body(pair))
+            .map(|pair| pair.head)
+            .collect::<BTreeSet<_>>();
+        self.pairs
+            .retain(|pair| !defeating_attributed_div_heads.contains(&pair.head));
+        let quoted_spaced_div_closers = self
+            .pairs
+            .iter()
+            .filter(|pair| {
+                pair.kind == WikidotBlockKind::Div
+                    && self.line_quote_depth(pair.closer) > 0
+                    && self.spaced_close_head(pair.closer, pair.kind)
+            })
+            .map(|pair| pair.closer)
+            .collect::<BTreeSet<_>>();
+        self.pairs
+            .retain(|pair| !quoted_spaced_div_closers.contains(&pair.closer));
         for pair in &mut self.pairs {
             pair.closer_byte = self.tokens[pair.closer].span.start;
         }

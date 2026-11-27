@@ -315,7 +315,15 @@ fn collect_wikidot_literal_blocks(source: &str, ranges: &mut Vec<Range<usize>>) 
     }
 
     if let Some(block) = active {
-        ranges.push(block.start..source.len());
+        let end = if block.close == "[[/code]]" {
+            source[block.start..]
+                .to_ascii_lowercase()
+                .find("[[/div]]")
+                .map_or(source.len(), |relative| block.start + relative)
+        } else {
+            source.len()
+        };
+        ranges.push(block.start..end);
     }
 }
 

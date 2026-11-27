@@ -1,0 +1,32 @@
+{
+    "elements": [
+        {
+            "element": "code",
+            "data": {
+                "contents": "x",
+                "language": null,
+                "name": null
+            }
+        },
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "y"
+                    }
+                ]
+            }
+        }
+    ],
+    "code-blocks": [
+        {
+            "contents": "x",
+            "language": null,
+            "name": null
+        }
+    ]
+}

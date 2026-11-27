@@ -44,6 +44,7 @@ struct NativeQuoteRow<'t> {
     paragraph_safe: bool,
     paragraph_split: Option<Vec<ParagraphSplitEntry>>,
     empty_spaced: bool,
+    control_only: bool,
     indent: usize,
     source_line: Option<&'t str>,
     cut_boundary: bool,
@@ -965,6 +966,7 @@ fn try_consume_fn<'r, 't>(
                         paragraph_safe: false,
                         paragraph_split: None,
                         empty_spaced: false,
+                        control_only: false,
                         indent: row_indent,
                         source_line: None,
                         cut_boundary: false,
@@ -1071,6 +1073,7 @@ fn try_consume_fn<'r, 't>(
                         paragraph_safe: false,
                         paragraph_split: None,
                         empty_spaced: false,
+                        control_only: false,
                         indent: row_indent,
                         source_line: None,
                         cut_boundary: false,
@@ -1296,9 +1299,28 @@ fn try_consume_fn<'r, 't>(
                 .inner()
                 .get(content_start..line_text_end)
                 .is_some_and(|line| line.trim_end_matches([' ', '\t']) == "@@@@");
+        let control_only_row = parser.settings().layout.legacy()
+            && parser
+                .full_text()
+                .inner()
+                .get(content_start..line_text_end)
+                .is_some_and(|line| {
+                    !line.is_empty()
+                        && line.chars().all(|character| {
+                            character == ' '
+                                || character == '\t'
+                                || matches!(character as u32,
+                                    0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
+                        })
+                        && line.chars().any(|character| {
+                            matches!(character as u32,
+                                0x01..=0x08 | 0x0e..=0x1a | 0x1c..=0x1f)
+                        })
+                });
         let row_is_empty = elements.is_empty()
             && errors.len() == errors_before
-            && !complete_empty_raw_line;
+            && !complete_empty_raw_line
+            && !control_only_row;
         let mut absorbed_unquoted_footnote = false;
         if parser.settings().layout.legacy() && starts_footnote(parser) {
             let mut candidate = parser.clone_with_rule(RULE_BLOCKQUOTE);
@@ -1618,6 +1640,7 @@ fn try_consume_fn<'r, 't>(
                         paragraph_safe: before_safe,
                         paragraph_split: None,
                         empty_spaced: false,
+                        control_only: false,
                         indent: row_indent,
                         source_line,
                         cut_boundary,
@@ -1661,6 +1684,7 @@ fn try_consume_fn<'r, 't>(
                     paragraph_safe,
                     paragraph_split: None,
                     empty_spaced: empty_spaced_row,
+                    control_only: false,
                     indent: row_indent,
                     source_line,
                     cut_boundary: false,
@@ -1793,6 +1817,7 @@ fn try_consume_fn<'r, 't>(
             paragraph_safe,
             paragraph_split,
             empty_spaced: empty_spaced_row,
+            control_only: control_only_row,
             indent: row_indent,
             source_line,
             cut_boundary,
@@ -2055,6 +2080,7 @@ fn push_quote_row_units<'t>(
             paragraph_safe,
             paragraph_split: None,
             empty_spaced: false,
+            control_only: false,
             indent: 0,
             source_line: None,
             cut_boundary: false,
@@ -3062,6 +3088,9 @@ fn push_native_quote_row<'t>(
         stack.mark_wikidot_simple_table_boundary();
         stack.record_next_element_line_start(true);
         return;
+    }
+    if wikidot && row.control_only {
+        stack.mark_control_only_line();
     }
     // A row carrying only a line break lifted from an all-empty explicit
     // list arms the stack's empty-list state, as the top-level gather

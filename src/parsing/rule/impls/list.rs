@@ -75,6 +75,28 @@ pub const RULE_LIST: Rule = Rule {
     try_consume_fn,
 };
 
+fn wikidot_control_only_marker_line(source: &str, marker_start: usize) -> bool {
+    let line_end = source[marker_start..]
+        .find('\n')
+        .map_or(source.len(), |offset| marker_start + offset);
+    let line = &source[marker_start..line_end];
+    let Some(rest) = line.get(2..) else {
+        return false;
+    };
+    let rest = rest.trim_start_matches([' ', '\t']);
+    !rest.is_empty()
+        && rest.chars().all(|character| {
+            character == ' '
+                || character == '\t'
+                || matches!(character as u32,
+                    0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
+        })
+        && rest.chars().any(|character| {
+            matches!(character as u32,
+                0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
+        })
+}
+
 fn wikidot_empty_marker_line(source: &str, marker_start: usize) -> bool {
     let line_end = source[marker_start..]
         .find('\n')
@@ -129,6 +151,11 @@ fn try_consume_fn<'r, 't>(
     let entry_state = parser.get_mutable_state();
     let empty_marker_line = parser.settings().layout.legacy()
         && wikidot_empty_marker_line(
+            parser.full_text().inner(),
+            entry_parser.current().span.start,
+        );
+    let control_only_marker_line = parser.settings().layout.legacy()
+        && wikidot_control_only_marker_line(
             parser.full_text().inner(),
             entry_parser.current().span.start,
         );
@@ -352,6 +379,26 @@ fn try_consume_fn<'r, 't>(
                 vec![element]
             })
             .collect();
+    }
+    if elements.is_empty() && control_only_marker_line {
+        let ltype =
+            get_list_type(entry_parser.current().token).unwrap_or(ListType::Bullet);
+        let mut attributes = AttributeMap::new();
+        attributes.insert(
+            crate::tree::WIKIDOT_CONTROL_ONLY_LIST_ITEM_MARKER,
+            std::borrow::Cow::Borrowed(""),
+        );
+        elements.push(Element::List {
+            ltype,
+            attributes: AttributeMap::new(),
+            items: vec![ListItem::Elements {
+                attributes,
+                elements: Vec::new(),
+            }],
+            wikidot_explicit_block: false,
+            wikidot_unclosed: false,
+            wikidot_marker_head_spawn: false,
+        });
     }
     if elements.is_empty() && parser.settings().layout.legacy() {
         paragraph_safe = true;

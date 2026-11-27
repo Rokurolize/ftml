@@ -93,7 +93,24 @@ fn try_consume_strikethrough<'r, 't>(
     ];
     let ctype = ContainerType::Strikethrough;
     let collected = collect_container(parser, rule, ctype, &close, &invalid, None)?;
-    let (elements, errors, paragraph_safe) = collected.into();
+    let (mut elements, errors, paragraph_safe) = collected.into();
+    if token == Token::DoubleDash
+        && parser.settings().layout.legacy()
+        && parser.current().token == Token::Other
+        && parser.current().slice == "-"
+    {
+        let source = parser.full_text().inner().as_bytes();
+        let close_start = parser.current().span.start.saturating_sub(2);
+        if close_start > 0
+            && matches!(source[close_start - 1], 0x0b | 0x0c)
+            && let Elements::Single(Element::Container(container)) = &mut elements
+        {
+            container
+                .elements_mut()
+                .push(Element::Text(std::borrow::Cow::Borrowed("-")));
+            parser.step()?;
+        }
+    }
     if parser.settings().layout.legacy()
         && matches!(
             &elements,

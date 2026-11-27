@@ -126,7 +126,7 @@ fn apply(stack: &mut ParagraphStack<'static>, op: usize) {
         16 => stack.mark_next_unwrapped(),
         17 => stack.mark_wikidot_terminal_backslash(),
         18 => stack.ensure_wikidot_trailing_line_break(),
-        19 => stack.mark_discarded_control(),
+        19 => stack.mark_discarded_control(false),
         20 => stack.mark_wikidot_advanced_table_cell(),
         21 => stack.mark_keep_lone_break_before_list(),
         22 => stack.clear_wikidot_paired_close_break_marks(),

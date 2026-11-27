@@ -71,6 +71,7 @@ pub struct ParagraphStack<'t> {
     current_unwrapped: bool,
 
     current_has_discarded_control: bool,
+    current_has_empty_line_control: bool,
     wikidot_complete_raw_line_occupied: bool,
     wikidot_complete_raw_run_after_block: bool,
     wikidot_demoted_comment_break: bool,
@@ -1294,8 +1295,17 @@ impl<'t> ParagraphStack<'t> {
     }
 
     #[inline]
-    pub fn mark_discarded_control(&mut self) {
+    pub fn mark_discarded_control(&mut self, keep_empty: bool) {
         self.mark_wikidot_invisible_line_occupancy();
+        if self.wikidot && keep_empty {
+            self.current_has_empty_line_control = true;
+        }
+    }
+
+    #[inline]
+    pub(crate) fn mark_control_only_line(&mut self) {
+        self.mark_wikidot_invisible_line_occupancy();
+        self.current_has_empty_line_control = true;
     }
 
     #[inline]
@@ -2501,7 +2511,10 @@ impl<'t> ParagraphStack<'t> {
         if !self.wikidot_keep_chunk_trailing_space {
             self.trim_trailing_ascii_space();
         }
-        if self.current.is_empty() {
+        let control_only_paragraph = self.wikidot
+            && self.current.is_empty()
+            && self.current_has_empty_line_control;
+        if self.current.is_empty() && !control_only_paragraph {
             return None;
         }
 
@@ -2525,7 +2538,13 @@ impl<'t> ParagraphStack<'t> {
         }
 
         let elements = mem::take(&mut self.current);
-        let attributes = AttributeMap::new();
+        let mut attributes = AttributeMap::new();
+        if control_only_paragraph {
+            attributes.insert(
+                crate::tree::WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER,
+                Cow::Borrowed(""),
+            );
+        }
         let container = Container::new(ContainerType::Paragraph, elements, attributes);
         let element = Element::Container(container);
         Some(element)
@@ -2625,6 +2644,7 @@ impl<'t> ParagraphStack<'t> {
         }
         self.current_unwrapped = false;
         self.current_has_discarded_control = false;
+        self.current_has_empty_line_control = false;
         self.wikidot_stash_br = 0;
         self.wikidot_complete_raw_line_occupied = false;
         self.wikidot_complete_raw_run_after_block = false;
@@ -2707,6 +2727,7 @@ impl<'t> ParagraphStack<'t> {
             self.finished.push(paragraph);
         }
         self.current_has_discarded_control = false;
+        self.current_has_empty_line_control = false;
         self.wikidot_complete_raw_line_occupied = false;
         self.wikidot_complete_raw_run_after_block = false;
         self.wikidot_demoted_comment_break = false;
@@ -3163,7 +3184,7 @@ mod tests {
     #[test]
     fn discarded_control_trims_surrounding_spaces_but_preserves_a_line_break() {
         let mut stack = ParagraphStack::new_wikidot();
-        stack.mark_discarded_control();
+        stack.mark_discarded_control(false);
         stack.push_element(text!(" "), true);
         stack.push_element(Element::LineBreak, true);
         stack.push_element(text!("omega"), true);
@@ -3176,7 +3197,7 @@ mod tests {
         let mut between_spaces = ParagraphStack::new_wikidot();
         between_spaces.push_element(text!("alpha"), true);
         between_spaces.push_element(text!(" "), true);
-        between_spaces.mark_discarded_control();
+        between_spaces.mark_discarded_control(false);
         between_spaces.push_element(text!(" "), true);
         between_spaces.push_element(text!("omega"), true);
 

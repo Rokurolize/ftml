@@ -803,7 +803,12 @@ where
                         literal_gallery_pending = false;
                     }
                     if parser.current().token == Token::DiscardedControl {
-                        stack.mark_discarded_control();
+                        let keep_empty =
+                            parser.current().slice.chars().all(|character| {
+                                matches!(character as u32,
+                                0x01..=0x08 | 0x0e..=0x1a | 0x1c..=0x1f)
+                            });
+                        stack.mark_discarded_control(keep_empty);
                     }
                     if comment
                         && parser.settings().layout.legacy()

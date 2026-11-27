@@ -3,7 +3,8 @@ use crate::tree::{
     Container, ContainerType, Element, Heading, HeadingReopen, InlineFormatKind,
     ListItem, PartialElement, TabViewItem, TableType, WIKIDOT_BLOCK_CHUNK_PREFIX_MARKER,
     WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER, WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER,
-    WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER, WIKIDOT_FORMAT_LABEL_INSIDE_LIST_MARKER,
+    WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER, WIKIDOT_EMPTY_FOOTNOTE_TAIL_BARE_MARKER,
+    WIKIDOT_FORMAT_LABEL_INSIDE_LIST_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BARE_MARKER,
     WIKIDOT_FORMAT_LABEL_LIST_CLOSE_TAIL_BREAK_MARKER,
     WIKIDOT_FORMAT_STOPS_AT_LIST_MARKER, WIKIDOT_HEADING_REOPEN_MARKER,
@@ -5847,7 +5848,10 @@ fn flush_paragraph_group<'t>(
     let wrapped = wrapped && !(ends_with_scored_span && !ends_at_advanced_table);
     let keep_empty = attributes
         .get()
-        .contains_key(WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER);
+        .contains_key(WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER)
+        || attributes
+            .get()
+            .contains_key(WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER);
     if elements.is_empty() && !keep_empty {
         return;
     }
@@ -5965,36 +5969,6 @@ fn collect_valid_pairs(
             }
         }
     }
-}
-
-fn span_blank_split_has_content(element: &Element<'_>) -> bool {
-    match element {
-        Element::LineBreak | Element::LineBreaks(_) => false,
-        Element::Text(text) => !text.trim().is_empty(),
-        _ => true,
-    }
-}
-
-fn split_run_at_blank_break<'t>(
-    run: &[Element<'t>],
-) -> Option<(Vec<Element<'t>>, Vec<Element<'t>>)> {
-    if !run.first().is_some_and(span_blank_split_has_content)
-        || !run.last().is_some_and(span_blank_split_has_content)
-    {
-        return None;
-    }
-    let mut index = 0;
-    while index + 1 < run.len() {
-        if matches!(run[index], Element::LineBreak)
-            && matches!(run[index + 1], Element::LineBreak)
-            && run[..index].iter().any(span_blank_split_has_content)
-            && run[index + 2..].iter().any(span_blank_split_has_content)
-        {
-            return Some((run[..index + 2].to_vec(), run[index + 2..].to_vec()));
-        }
-        index += 1;
-    }
-    None
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -7788,6 +7762,13 @@ fn drop_vanished_paragraphs(elements: &mut Vec<Element>) {
         }
     }
     elements.retain(|element| !vanished_block(element));
+    for element in elements.iter_mut() {
+        if let Element::Container(container) = element {
+            container
+                .attributes_mut()
+                .remove(WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER);
+        }
+    }
 }
 
 fn all_whitespace_text(elements: &[Element]) -> bool {
@@ -7803,6 +7784,10 @@ fn vanished_block(element: &Element) -> bool {
                 container.ctype(),
                 ContainerType::Paragraph | ContainerType::Blockquote
             ) && container.attributes().get().is_empty()
+                && !container
+                    .attributes()
+                    .get()
+                    .contains_key(WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER)
                 && all_whitespace_text(container.elements())
         }
         // An unclosed list renders live's intentionally truncated output
@@ -7821,7 +7806,13 @@ fn vanished_list_item(item: &ListItem) -> bool {
         ListItem::Elements {
             attributes,
             elements,
-        } => attributes.get().is_empty() && all_whitespace_text(elements),
+        } => {
+            attributes.get().is_empty()
+                && !attributes
+                    .get()
+                    .contains_key(crate::tree::WIKIDOT_CONTROL_ONLY_LIST_ITEM_MARKER)
+                && all_whitespace_text(elements)
+        }
         ListItem::SubList { .. } => false,
     }
 }
@@ -8638,25 +8629,6 @@ fn flush_run<'t>(
     if run.is_empty() {
         return;
     }
-    if active.has_span_or_size_scope()
-        && active.active_scopes_all_span_size()
-        && let Some((head, tail)) = split_run_at_blank_break(run)
-    {
-        mem::take(run);
-        let mut head = head;
-        flush_run_wrapped(output, &mut head, active, last_run_outer_scope);
-        let mut tail_out = Vec::new();
-        let mut tail = tail;
-        let mut tail_merge = RunMergeState::default();
-        flush_run_wrapped(&mut tail_out, &mut tail, active, &mut tail_merge);
-        output.push(Element::Container(Container::new(
-            ContainerType::Paragraph,
-            tail_out,
-            AttributeMap::new(),
-        )));
-        last_run_outer_scope.reset();
-        return;
-    }
     flush_run_wrapped(output, run, active, last_run_outer_scope);
 }
 
@@ -8912,6 +8884,10 @@ fn is_empty_paragraph(element: &Element<'_>) -> bool {
                     .attributes()
                     .get()
                     .contains_key(WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER)
+                && !container
+                    .attributes()
+                    .get()
+                    .contains_key(WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER)
     )
 }
 

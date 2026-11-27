@@ -118,6 +118,12 @@ pub(crate) const WIKIDOT_CENTERED_DIV_CLOSE_PARAGRAPH_MARKER: &str =
 /// self-removing four-character runs; stripped once inline-scope lowering has kept it.
 pub(crate) const WIKIDOT_CENTERED_RUN_PARAGRAPH_MARKER: &str =
     "data-ftml-centered-run-paragraph";
+/// Marks an empty paragraph whose source line held only discarded C0 controls;
+/// live still builds the block. Stripped once inline-scope lowering has kept it.
+pub(crate) const WIKIDOT_CONTROL_ONLY_PARAGRAPH_MARKER: &str =
+    "data-ftml-control-only-paragraph";
+pub(crate) const WIKIDOT_CONTROL_ONLY_LIST_ITEM_MARKER: &str =
+    "data-ftml-control-only-list-item";
 
 /// Stands in for a label whose Wikidot head value evaluated to empty through
 /// raw inline markup (which live renders as an empty label, unlike an authored

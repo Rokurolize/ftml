@@ -1772,6 +1772,7 @@ where
     } else {
         0
     };
+    let leading_space_keeps_break = parser.settings().layout.legacy() && next_offset == 1;
     let looks_skippable = parser.look_ahead(next_offset).is_some_and(|token| {
         let following = parser.look_ahead(next_offset + 1).map(|next| next.token);
         let valid_shape = match token.token {
@@ -1779,7 +1780,7 @@ where
                 following == Some(Token::Whitespace)
             }
             Token::Equals => {
-                !(parser.settings().layout.legacy() && next_offset == 1)
+                !leading_space_keeps_break
                     && (following == Some(Token::Whitespace) || {
                         let equals_after = parser
                             .remaining()
@@ -1807,18 +1808,22 @@ where
                         }
                     })
             }
-            Token::TripleDash => matches!(
-                following,
-                Some(Token::LineBreak | Token::ParagraphBreak | Token::InputEnd)
-            ),
+            Token::TripleDash => {
+                !leading_space_keeps_break
+                    && matches!(
+                        following,
+                        Some(Token::LineBreak | Token::ParagraphBreak | Token::InputEnd)
+                    )
+            }
             Token::ClearFloatLeft | Token::ClearFloatRight | Token::ClearFloatBoth => {
-                !parser.settings().layout.legacy() || {
-                    let source = parser.full_text().inner();
-                    let line_end = source[token.span.end..]
-                        .find(['\r', '\n'])
-                        .map_or(source.len(), |offset| token.span.end + offset);
-                    token.span.end == line_end
-                }
+                !leading_space_keeps_break
+                    && (!parser.settings().layout.legacy() || {
+                        let source = parser.full_text().inner();
+                        let line_end = source[token.span.end..]
+                            .find(['\r', '\n'])
+                            .map_or(source.len(), |offset| token.span.end + offset);
+                        token.span.end == line_end
+                    })
             }
             _ => true,
         };

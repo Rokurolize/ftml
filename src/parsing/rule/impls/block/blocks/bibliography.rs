@@ -149,16 +149,42 @@ fn parse_fn<'r, 't>(
         let quoted = source[line_start..opener_start]
             .trim_end_matches([' ', '\t'])
             .ends_with('>');
+        let closer = find_bibliography_closer(source, body_start).map(|start| {
+            let end = start + BIBLIOGRAPHY_CLOSER.len();
+            let mut probe = parser.clone();
+            while probe.current().span.start < end && probe.step().is_ok() {}
+            parser.update(&probe);
+            (start, end)
+        });
+        if let Some((closer_start, closer_end)) = closer
+            && source
+                .get(opener_end..closer_start)
+                .is_some_and(|body| !body.contains(['\n', '\r']))
+        {
+            let mut inline: Vec<Element<'_>> = Vec::with_capacity(elements.len() + 3);
+            if quoted && source[..opener_start].ends_with([' ', '\t']) {
+                inline.push(text!(" "));
+            }
+            inline.push(Element::Text(cow!(&source[opener_start..opener_end])));
+            inline.append(&mut elements);
+            inline.push(Element::Text(cow!(&source[closer_start..closer_end])));
+            let mut coalesced: Vec<Element<'_>> = Vec::with_capacity(inline.len());
+            for element in inline {
+                match (coalesced.last_mut(), element) {
+                    (Some(Element::Text(previous)), Element::Text(text)) => {
+                        previous.to_mut().push_str(&text);
+                    }
+                    (_, element) => coalesced.push(element),
+                }
+            }
+            return ok!(false; coalesced, errors);
+        }
         elements.insert(0, Element::LineBreak);
         elements.insert(0, Element::Text(cow!(&source[opener_start..opener_end])));
         if quoted && source[..opener_start].ends_with([' ', '\t']) {
             elements.insert(0, text!(" "));
         }
-        if let Some(closer_start) = find_bibliography_closer(source, body_start) {
-            let closer_end = closer_start + BIBLIOGRAPHY_CLOSER.len();
-            let mut probe = parser.clone();
-            while probe.current().span.start < closer_end && probe.step().is_ok() {}
-            parser.update(&probe);
+        if let Some((closer_start, closer_end)) = closer {
             if quoted {
                 elements.push(Element::Text(cow!(&source[closer_start..closer_end])));
             } else {

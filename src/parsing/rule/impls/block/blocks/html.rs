@@ -60,10 +60,6 @@ fn parse_fn<'r, 't>(
         clear_wikidot_space_only_fused_open(parser, opener_start, name)?;
         scan_wikidot_html_class_style(parser, opener_start, name, &mut arguments);
     }
-    if parser.settings().layout.legacy() && arguments.has_source() && arguments.is_empty()
-    {
-        return Err(parser.make_err(ParseErrorKind::RuleFailed));
-    }
     if !parser.settings().enable_html_blocks {
         if parser.native_blockquote_depth().is_some() {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));

@@ -84,6 +84,7 @@ where
         HashMap<usize, Vec<(String, Vec<AttributeMap<'static>>)>>,
     /// Enclosing legacy Wikidot tabview render depth (0 = outermost view).
     wikidot_tabview_depth: usize,
+    wikidot_tabview_index: usize,
     /// Escaped `[[/tab]]` literals lifted out of nested tabviews, queued for
     /// emission by the outermost tabview's content (BRIEF-TE54).
     wikidot_tabview_pending_lifts: usize,
@@ -190,6 +191,7 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
             wikidot_equation_numbers: HashMap::new(),
             wikidot_tabview_nav_overrides: HashMap::new(),
             wikidot_tabview_depth: 0,
+            wikidot_tabview_index: 0,
             wikidot_tabview_pending_lifts: 0,
             wikidot_tabview_lift_armed: false,
             bibliography_render_stack: Vec::new(),
@@ -408,6 +410,12 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
 
     pub(crate) fn set_wikidot_tabview_depth(&mut self, depth: usize) {
         self.wikidot_tabview_depth = depth;
+    }
+
+    pub(crate) fn next_wikidot_tabview_index(&mut self) -> usize {
+        let index = self.wikidot_tabview_index;
+        self.wikidot_tabview_index += 1;
+        index
     }
 
     /// Queue one escaped `[[/tab]]` literal for emission by the outermost

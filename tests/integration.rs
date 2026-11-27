@@ -225,3 +225,6 @@ mod super_linear_families;
 
 #[path = "hang_tail_budgets.rs"]
 mod hang_tail_budgets;
+
+#[path = "wikidot_opaque_crossings.rs"]
+mod wikidot_opaque_crossings;

@@ -3474,12 +3474,15 @@ fn pairing_barrier(element: &Element<'_>) -> bool {
         Element::Container(container) => kind_from_container(container.ctype()).is_none(),
         Element::Raw(_)
         | Element::Anchor { .. }
+        | Element::Code(_)
         | Element::Collapsible { .. }
         | Element::Table(_)
         | Element::TabView(_)
         | Element::List { .. }
         | Element::DefinitionList(_)
         | Element::Include { .. }
+        | Element::Math { .. }
+        | Element::Module(_)
         | Element::HorizontalRule
         | Element::TableOfContents { .. }
         | Element::FootnoteBlock { .. } => true,

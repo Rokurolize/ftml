@@ -42,7 +42,7 @@ pub(super) fn legacy_format_body_contains_table(elements: &Elements<'_>) -> bool
     container
         .elements()
         .iter()
-        .any(|element| matches!(element, Element::Table(_)))
+        .any(|element| matches!(element, Element::Table(_) | Element::Module(_)))
 }
 
 /// Live rejects an inline format pair whose body holds an explicit list item

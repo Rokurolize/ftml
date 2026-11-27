@@ -986,7 +986,12 @@ fn collect_wikidot_label<'r, 't>(
 where
     'r: 't,
 {
-    let memo = if link_memo && parser.body_end_boundaries_is_empty() {
+    let memo = if link_memo
+        && parser.body_end_boundaries_is_empty()
+        && !parser.in_wikidot_span_body()
+        && !parser.in_wikidot_size_body()
+        && !parser.in_wikidot_anchor_body()
+    {
         Some(LinkLabelScanMemo {
             in_table_cell: parser.in_wikidot_simple_table_cell(),
             in_triple_link: parser.in_wikidot_literal_triple_link(),
@@ -1134,7 +1139,14 @@ where
     'r: 't,
 {
     let start = parser.current().span.start;
-    if let Some(outcome) = parser.single_link_label_owner_scan_outcome(start) {
+    let in_span = parser.in_wikidot_span_body();
+    let in_size = parser.in_wikidot_size_body();
+    let in_anchor = parser.in_wikidot_anchor_body();
+    if !in_span
+        && !in_size
+        && !in_anchor
+        && let Some(outcome) = parser.single_link_label_owner_scan_outcome(start)
+    {
         return outcome;
     }
 
@@ -1243,47 +1255,102 @@ where
                 let mut close = scan.clone();
                 if let Ok((name, _residual)) = close.get_wikidot_end_block_with_residual()
                 {
-                    if span_open && name.eq_ignore_ascii_case("span") {
-                        parser.cache_single_link_label_owner_scan_outcomes(
-                            &traversed, true,
-                        );
+                    if (span_open || in_span) && name.eq_ignore_ascii_case("span") {
+                        if !in_span && !in_size && !in_anchor {
+                            parser.cache_single_link_label_owner_scan_outcomes(
+                                &traversed, true,
+                            );
+                        }
                         return true;
                     }
-                    if size_open && name.eq_ignore_ascii_case("size") {
-                        parser.cache_single_link_label_owner_scan_outcomes(
-                            &traversed, true,
-                        );
+                    if (size_open || in_size) && name.eq_ignore_ascii_case("size") {
+                        if !in_span && !in_size && !in_anchor {
+                            parser.cache_single_link_label_owner_scan_outcomes(
+                                &traversed, true,
+                            );
+                        }
                         return true;
                     }
-                    if a_open && name.eq_ignore_ascii_case("a") {
-                        parser.cache_single_link_label_owner_scan_outcomes(
-                            &traversed, true,
-                        );
+                    if (a_open || in_anchor) && name.eq_ignore_ascii_case("a") {
+                        if !in_span && !in_size && !in_anchor {
+                            parser.cache_single_link_label_owner_scan_outcomes(
+                                &traversed, true,
+                            );
+                        }
                         return true;
                     }
                     if footnote_open && name.eq_ignore_ascii_case("footnote") {
-                        parser.cache_single_link_label_owner_scan_outcomes(
-                            &traversed, true,
-                        );
+                        if !in_span && !in_size && !in_anchor {
+                            parser.cache_single_link_label_owner_scan_outcomes(
+                                &traversed, true,
+                            );
+                        }
                         return true;
                     }
                     scan.update(&close);
                     continue;
                 }
             }
-            Token::RightBracket
-            | Token::RightBlock
-            | Token::RightLink
-            | Token::LineBreak
-            | Token::ParagraphBreak
-            | Token::InputEnd => {
-                parser.cache_single_link_label_owner_scan_outcomes(&traversed, false);
+            Token::RightBracket | Token::RightBlock | Token::RightLink => {
+                if (span_open || size_open || a_open)
+                    && wikidot_tail_closes_open_inline(&scan, span_open, size_open, a_open)
+                {
+                    if !in_span && !in_size && !in_anchor {
+                        parser.cache_single_link_label_owner_scan_outcomes(
+                            &traversed, true,
+                        );
+                    }
+                    return true;
+                }
+                if !in_span && !in_size && !in_anchor {
+                    parser.cache_single_link_label_owner_scan_outcomes(&traversed, false);
+                }
+                return false;
+            }
+            Token::LineBreak | Token::ParagraphBreak | Token::InputEnd => {
+                if !in_span && !in_size && !in_anchor {
+                    parser.cache_single_link_label_owner_scan_outcomes(&traversed, false);
+                }
                 return false;
             }
             _ => {}
         }
         if scan.step().is_err() {
             parser.cache_single_link_label_owner_scan_outcomes(&traversed, false);
+            return false;
+        }
+    }
+}
+
+fn wikidot_tail_closes_open_inline<'r, 't>(
+    parser: &Parser<'r, 't>,
+    span_open: bool,
+    size_open: bool,
+    a_open: bool,
+) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    loop {
+        match scan.current().token {
+            Token::LeftBlockEnd => {
+                let mut close = scan.clone();
+                if let Ok((name, _)) = close.get_wikidot_end_block_with_residual() {
+                    if (span_open && name.eq_ignore_ascii_case("span"))
+                        || (size_open && name.eq_ignore_ascii_case("size"))
+                        || (a_open && name.eq_ignore_ascii_case("a"))
+                    {
+                        return true;
+                    }
+                    scan.update(&close);
+                    continue;
+                }
+            }
+            Token::ParagraphBreak | Token::InputEnd => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
             return false;
         }
     }

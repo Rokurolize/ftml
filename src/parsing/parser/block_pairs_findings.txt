@@ -203,3 +203,5 @@ corpus-test/note/exhibited-closer-balanced/input.ftml	Note@0..54 descent-only
 corpus-test/blockquote/collapsible-tail-inline-body/input.ftml	Collapsible@2..34 scan-only
 corpus-test/blockquote/collapsible-tail-inline-body/input.ftml	Collapsible@2..35 descent-only
 corpus-test/comment/attribute-plain-close-control/input.ftml	Div@0..33 scan-only
+corpus-test/footnote/collapsible-cross-close-footnote/input.ftml	Collapsible@0..43 descent-only
+corpus-test/footnote/attributed-footnote-collapsible-cross-close/input.ftml	Collapsible@22..66 descent-only

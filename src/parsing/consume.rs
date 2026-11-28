@@ -950,6 +950,21 @@ where
     }
 
     if parser.settings().layout.legacy()
+        && parser.has_yielded_footnote_closer()
+        && parser.current().token == Token::LeftBlockEnd
+    {
+        let mut close = parser.clone();
+        if close
+            .get_end_block()
+            .is_ok_and(|name| name.eq_ignore_ascii_case("footnote"))
+        {
+            parser.update(&close);
+            parser.set_yielded_footnote_closer(false);
+            return Ok(Some(Elements::None));
+        }
+    }
+
+    if parser.settings().layout.legacy()
         && parser.pending_wikidot_collapsible_closer()
         && parser.current().token == Token::LeftBlockEnd
     {

@@ -48,6 +48,50 @@ const URL_SCHEMES: [&str; 19] = [
     "sftp://",
 ];
 
+const FREELINK_URL_SCHEMES: [&str; 29] = [
+    "blob:",
+    "chrome-extension://",
+    "chrome://",
+    "content://",
+    "cvs://",
+    "dns:",
+    "feed:",
+    "file://",
+    "ftp://",
+    "git://",
+    "gopher://",
+    "http://",
+    "https://",
+    "irc6://",
+    "irc://",
+    "ircs://",
+    "mailto:",
+    "mms:",
+    "news:",
+    "nntp:",
+    "resource://",
+    "rtmp://",
+    "sftp://",
+    "skype:",
+    "sms:",
+    "ssh://",
+    "tel:",
+    "telnet://",
+    "xmpp:",
+];
+
+pub(crate) fn is_freelink_url(url: &str) -> bool {
+    FREELINK_URL_SCHEMES.iter().any(|scheme| {
+        url.get(..scheme.len()).is_some_and(|prefix| {
+            if scheme.ends_with("://") {
+                prefix.eq_ignore_ascii_case(scheme)
+            } else {
+                prefix == *scheme
+            }
+        })
+    })
+}
+
 pub fn is_url(url: &str) -> bool {
     match url.as_bytes().first().copied() {
         Some(b'b') => url.starts_with("blob:"),

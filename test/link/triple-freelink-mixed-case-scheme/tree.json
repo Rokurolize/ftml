@@ -1,0 +1,119 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "link",
+                        "data": {
+                            "type": "page",
+                            "link": {
+                                "site": null,
+                                "page": "http",
+                                "extra": "//a"
+                            },
+                            "label": {
+                                "slug": "//a"
+                            },
+                            "target": null
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "link",
+                        "data": {
+                            "type": "page",
+                            "link": {
+                                "site": null,
+                                "page": "http",
+                                "extra": "//a"
+                            },
+                            "label": {
+                                "text": "label"
+                            },
+                            "target": null
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "link",
+                        "data": {
+                            "type": "page",
+                            "link": {
+                                "site": null,
+                                "page": "http",
+                                "extra": "//a"
+                            },
+                            "label": {
+                                "text": "Local"
+                            },
+                            "target": null
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "HtTp"
+                    },
+                    {
+                        "element": "text",
+                        "data": ":"
+                    },
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "italics",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "text",
+                                    "data": "a"
+                                },
+                                {
+                                    "element": "line-break"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "["
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "HtTp"
+                                },
+                                {
+                                    "element": "text",
+                                    "data": ":"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "element": "text",
+                        "data": "a"
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "text",
+                        "data": "label"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]"
+                    }
+                ]
+            }
+        }
+    ]
+}

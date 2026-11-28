@@ -1,0 +1,46 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "link",
+                        "data": {
+                            "type": "page",
+                            "link": {
+                                "site": null,
+                                "page": "xmpp:a",
+                                "extra": null
+                            },
+                            "label": {
+                                "slug": "a"
+                            },
+                            "target": null
+                        }
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "link",
+                        "data": {
+                            "type": "page",
+                            "link": {
+                                "site": null,
+                                "page": "xmpp:a",
+                                "extra": null
+                            },
+                            "label": {
+                                "text": "label"
+                            },
+                            "target": null
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

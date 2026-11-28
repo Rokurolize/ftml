@@ -39,6 +39,7 @@ use crate::tree::{
     LinkLocation, SocialButtons, StandaloneButtonAction, VariableScopes,
 };
 use crate::url::{HrefKind, classify_href, normalize_href};
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt::{self, Write};
 use std::num::NonZeroUsize;
@@ -483,6 +484,14 @@ impl<'i, 'h, 'e, 't> HtmlContext<'i, 'h, 'e, 't> {
                     }
                 }
             }
+        }
+    }
+
+    pub fn add_freelink(&mut self, link: &LinkLocation) {
+        if let LinkLocation::Url(url) = link {
+            self.backlinks
+                .external_links
+                .push(Cow::Owned(url.as_ref().to_owned()));
         }
     }
 

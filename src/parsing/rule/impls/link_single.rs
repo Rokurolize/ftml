@@ -1036,7 +1036,14 @@ where
     }
 
     let source = parser.full_text().inner();
-    let start = label_start.unwrap_or_else(|| parser.current().span.start);
+    let mut start = label_start.unwrap_or_else(|| parser.current().span.start);
+    if source[start..].starts_with("@@@@") {
+        let run = source[start..]
+            .bytes()
+            .take_while(|byte| *byte == b'@')
+            .count();
+        start += run;
+    }
     let mut copied_until = start;
     let mut without_comments = None::<String>;
 
@@ -1170,6 +1177,7 @@ where
     let mut scan = parser.clone();
     let mut traversed = Vec::new();
     let mut raw_open = false;
+    let mut last_raw_end = None;
     let mut alternate_raw_open = false;
     let mut triple_link_open = false;
     let mut span_open = false;
@@ -1180,11 +1188,17 @@ where
     loop {
         traversed.push(scan.current().span.start);
         match scan.current().token {
-            Token::Raw if raw_open => {
-                parser.cache_single_link_label_owner_scan_outcomes(&traversed, true);
-                return true;
+            Token::Raw => {
+                if last_raw_end == Some(scan.current().span.start) {
+                    raw_open = false;
+                } else if raw_open {
+                    parser.cache_single_link_label_owner_scan_outcomes(&traversed, true);
+                    return true;
+                } else {
+                    raw_open = true;
+                }
+                last_raw_end = Some(scan.current().span.end);
             }
-            Token::Raw => raw_open = true,
             Token::LeftRaw => alternate_raw_open = true,
             Token::RightRaw if alternate_raw_open => {
                 parser.cache_single_link_label_owner_scan_outcomes(&traversed, true);
@@ -1615,6 +1629,23 @@ where
 
             Token::Raw | Token::LeftRaw => {
                 let alternate = probe.current().token == Token::LeftRaw;
+                if !alternate {
+                    let mut cursor = probe.clone();
+                    let mut adjacent = 0;
+                    while cursor.current().token == Token::Raw {
+                        adjacent += 1;
+                        if cursor.step().is_err() {
+                            break;
+                        }
+                    }
+                    if adjacent >= 2 {
+                        for _ in 0..adjacent {
+                            probe.step()?;
+                        }
+                        no_raw_close = true;
+                        continue;
+                    }
+                }
                 let known_unclosed = if alternate {
                     no_alt_raw_close
                 } else {

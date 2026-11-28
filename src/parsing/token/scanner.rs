@@ -285,7 +285,12 @@ fn scan_literal(
     let result = match bytes[start] {
         b'@' if has(bytes, start, b"@@") => (Token::Raw, start + 2),
         b'@' if has(bytes, start, b"@<") => (Token::LeftRaw, start + 2),
-        b'>' if has(bytes, start, b">@") => (Token::RightRaw, start + 2),
+        b'>' if has(bytes, start, b">@")
+            && (bytes.get(start + 2) != Some(&b'@')
+                || bytes.get(start + 3) == Some(&b'<')) =>
+        {
+            (Token::RightRaw, start + 2)
+        }
         b'[' if valid_comment_opener => (Token::LeftComment, start + 4),
         b'[' if has(bytes, start, b"[[[[") && bracket_run_offset.is_multiple_of(4) => {
             (Token::LeftBracket, start + 1)
@@ -488,6 +493,18 @@ fn scan_url_body(bytes: &[u8], start: usize) -> Option<usize> {
                 probe += 1;
             }
             if closed {
+                break;
+            }
+        }
+        if has(bytes, end, b"**")
+            && let Some(relative_close) = bytes[end + 2..]
+                .windows(2)
+                .position(|window| window == b"**")
+        {
+            let inner = &bytes[end + 2..end + 2 + relative_close];
+            if inner.windows(2).any(|window| window == b"--")
+                || inner.windows(3).any(|window| window == b"...")
+            {
                 break;
             }
         }

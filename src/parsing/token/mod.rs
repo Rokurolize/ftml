@@ -271,6 +271,7 @@ impl Token {
 
             Rule::identifier => Token::Identifier,
             Rule::email => Token::Email,
+            Rule::url_format_pair => Token::Other,
             Rule::url => Token::Url,
             Rule::url_star => Token::UrlStar,
             Rule::url_star_pre => Token::Other,

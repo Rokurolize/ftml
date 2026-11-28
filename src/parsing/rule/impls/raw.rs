@@ -168,10 +168,6 @@ fn try_consume_fn<'r, 't>(
                 }
 
                 (Token::ParagraphBreak, Token::Raw) => {
-                    if parser.settings().layout.legacy() {
-                        parser.step_n(3)?;
-                        return ok!(Elements::None);
-                    }
                     trace!("Found interrupted raw, aborting");
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
@@ -223,16 +219,19 @@ fn try_consume_fn<'r, 't>(
         // `>` is glued to a preceding `>` run. The tokenizer emits the run
         // as a single Quote token, so no RightRaw token follows; the `@`
         // after the run is the closer's second half (`@<a>>@` is raw `a>`).
+        let closing_double_at = parser.look_ahead(0).is_some_and(|trailing| {
+            trailing.token == Token::Raw
+                && trailing.slice == "@@"
+                && parser.generated_for(trailing).is_none()
+        });
         if ending_token == Token::RightRaw
             && token == Token::Quote
             && parser.look_ahead(0).is_some_and(|trailing| {
-                trailing.token == Token::Other
-                    && trailing.slice == "@"
+                ((trailing.token == Token::Other && trailing.slice == "@")
+                    || (trailing.token == Token::Raw && trailing.slice == "@@"))
                     && parser.generated_for(trailing).is_none()
             })
         {
-            // `slice_partial` excludes its end token, so the quote run's
-            // text is appended manually minus the closer's `>`.
             let quote_slice = parser.current().slice.to_owned();
             let quote_end = parser.current().span.end;
             let slice = parser.full_text().slice_partial(start, parser.current());
@@ -243,20 +242,34 @@ fn try_consume_fn<'r, 't>(
             let content = format!("{slice}{quote_head}");
             parser.step_n(2)?;
 
+            let with_residue = |element: Element<'t>| {
+                if closing_double_at {
+                    Elements::Multiple(vec![element, text!("@")])
+                } else {
+                    Elements::Single(element)
+                }
+            };
+
             if parser.settings().layout.legacy() && content.is_empty() {
-                return ok!(Elements::None);
+                return ok!(if closing_double_at {
+                    Elements::Single(text!("@"))
+                } else {
+                    Elements::None
+                });
             }
 
             if !generated.is_empty() {
-                return success_elements(Element::Delayed(DelayedElement::raw(
-                    parser.full_text().inner(),
-                    content_range,
-                    &generated,
+                return success_elements(with_residue(Element::Delayed(
+                    DelayedElement::raw(
+                        parser.full_text().inner(),
+                        content_range,
+                        &generated,
+                    ),
                 )));
             }
 
             let raw = decode_semicolon_entities(&content).into_owned();
-            return success_elements(Element::Raw(Cow::Owned(raw)));
+            return success_elements(with_residue(Element::Raw(Cow::Owned(raw))));
         }
 
         // Live Wikidot closes a double-at raw at a final `>` when the
@@ -307,16 +320,7 @@ fn try_consume_fn<'r, 't>(
             let result = finish_double_at_raw(parser, element);
             return if crossed_break {
                 result.map(|mut success| {
-                    success.item = match success.item {
-                        Elements::None => Elements::None,
-                        Elements::Single(element) => {
-                            Elements::Multiple(vec![element, text!(" ")])
-                        }
-                        Elements::Multiple(mut elements) => {
-                            elements.insert(1, text!(" "));
-                            Elements::Multiple(elements)
-                        }
-                    };
+                    success.item = wikidot_fold_crossed_break_at_residue(success.item);
                     success
                 })
             } else {
@@ -357,6 +361,11 @@ fn try_consume_fn<'r, 't>(
                     let raw = slice
                         .strip_suffix('@')
                         .expect("right-raw token ends with an at sign");
+                    if crossed_break {
+                        let mut merged = raw.to_owned();
+                        merged.push('@');
+                        return ok!(Elements::Single(Element::Raw(Cow::Owned(merged))));
+                    }
                     return ok!(Elements::Multiple(vec![raw!(raw), text!("@")]));
                 }
 
@@ -380,34 +389,13 @@ fn try_consume_fn<'r, 't>(
                     Token::Raw => cow!(slice),
                     _ => unreachable!(),
                 };
-                if parser.settings().layout.legacy()
-                    && ending_token == Token::Raw
-                    && let Some(inner) = slice
-                        .strip_prefix("<<")
-                        .and_then(|slice| slice.strip_suffix(">>"))
-                {
-                    let raw = format!("<{inner}>");
-                    return ok!(Elements::Multiple(vec![
-                        text!("@"),
-                        Element::Raw(Cow::Owned(raw)),
-                        text!("@"),
-                    ]));
-                }
                 let element = Element::Raw(raw);
                 return if ending_token == Token::Raw {
                     let result = finish_double_at_raw(parser, element);
                     if crossed_break {
                         result.map(|mut success| {
-                            success.item = match success.item {
-                                Elements::None => Elements::None,
-                                Elements::Single(element) => {
-                                    Elements::Multiple(vec![element, text!(" ")])
-                                }
-                                Elements::Multiple(mut elements) => {
-                                    elements.insert(1, text!(" "));
-                                    Elements::Multiple(elements)
-                                }
-                            };
+                            success.item =
+                                wikidot_fold_crossed_break_at_residue(success.item);
                             success
                         })
                     } else {
@@ -464,6 +452,29 @@ fn wikidot_double_at_body_has_continuation_marker(parser: &Parser<'_, '_>) -> bo
         return false;
     };
     source[body_start..body_start + relative_close].contains('\u{001f}')
+}
+
+fn wikidot_fold_crossed_break_at_residue<'t>(item: Elements<'t>) -> Elements<'t> {
+    match item {
+        Elements::None => Elements::None,
+        Elements::Single(element) => Elements::Multiple(vec![element, text!(" ")]),
+        Elements::Multiple(mut elements) => {
+            let folds = elements.len() == 2
+                && matches!(&elements[0], Element::Raw(_))
+                && matches!(&elements[1], Element::Text(tail) if tail.as_ref() == "@");
+            if folds {
+                let Element::Raw(raw) = &elements[0] else {
+                    unreachable!()
+                };
+                let mut merged = raw.as_ref().to_owned();
+                merged.push('@');
+                Elements::Single(Element::Raw(Cow::Owned(merged)))
+            } else {
+                elements.insert(1, text!(" "));
+                Elements::Multiple(elements)
+            }
+        }
+    }
 }
 
 fn finish_double_at_raw<'r, 't>(
@@ -697,12 +708,9 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_angle_raw_uses_the_overlapping_at_angle_owner() {
+    fn wikidot_double_at_raw_keeps_angle_runs_in_its_body() {
         with_raw_elements("@@<<A>>@@", |result| {
-            assert_eq!(
-                result.unwrap(),
-                Elements::Multiple(vec![text!("@"), raw!("<A>"), text!("@")]),
-            );
+            assert_eq!(result.unwrap(), Elements::Single(raw!("<<A>>")),);
         });
     }
 

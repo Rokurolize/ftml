@@ -150,10 +150,12 @@ leading_host_char = _{
     discarded_control
 }
 
+url_format_pair = _{ "**" ~ (!("--" | "..." | "**") ~ ANY)* ~ ("--" | "...") ~ (!"**" ~ ANY)* ~ "**" }
+
 url = @{
     (((("http" ~ "s"?) | "ftp") ~ "://") | "mailto:") ~
     leading_host_char? ~
-    (!(NEWLINE | " " | "\t" | "\"" | "'" | "|" | "[" | "]" | ">@" | "@@" | ("@" ~ "<" ~ (!(">" ~ "@") ~ !NEWLINE ~ ANY)* ~ ">" ~ "@") | discarded_control | WHITE_SPACE | "\u{001b}" | "\u{007f}") ~ ANY)+
+    (!(NEWLINE | " " | "\t" | "\"" | "'" | "|" | "[" | "]" | ">@" | "@@" | url_format_pair | ("@" ~ "<" ~ (!(">" ~ "@") ~ !NEWLINE ~ ANY)* ~ ">" ~ "@") | discarded_control | WHITE_SPACE | "\u{001b}" | "\u{007f}") ~ ANY)+
 }
 
 url_star = @{ "*" ~ url }
@@ -166,7 +168,7 @@ url_star_pre = @{ "*" ~ &url_star }
 
 raw = @{ "@@" }
 left_raw = @{ "@<" }
-right_raw = @{ ">@" }
+right_raw = @{ ">@" ~ (!"@" | "@" ~ &"<") }
 
 left_comment = @{ "[!--" ~ &((!"--]" ~ ANY)* ~ "--]") }
 
@@ -182,7 +184,7 @@ comment_close = _{
 }
 dash_single = @{ "-" }
 url_char = _{
-    !(NEWLINE | " " | "\t" | "\"" | "'" | "|" | "[" | "]" | ">@" | "@@" | ("@" ~ "<" ~ (!(">" ~ "@") ~ !NEWLINE ~ ANY)* ~ ">" ~ "@") | discarded_control | WHITE_SPACE | "\u{001b}" | "\u{007f}") ~ ANY
+    !(NEWLINE | " " | "\t" | "\"" | "'" | "|" | "[" | "]" | ">@" | "@@" | url_format_pair | ("@" ~ "<" ~ (!(">" ~ "@") ~ !NEWLINE ~ ANY)* ~ ">" ~ "@") | discarded_control | WHITE_SPACE | "\u{001b}" | "\u{007f}") ~ ANY
 }
 url_dash_body = _{ (!("--" ~ "]") ~ url_char)* ~ "--" }
 url_dash_close = @{ ((("http" ~ "s"?) | "ftp") ~ "://" | "mailto:") ~ url_dash_body }

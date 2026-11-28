@@ -1498,19 +1498,22 @@ fn wikidot_div_close_was_on_centered_line(parser: &Parser<'_, '_>) -> bool {
 
     let source = parser.full_text().inner();
     let close_end = parser.current().span.start;
-    if close_end > source.len() {
+    let Some(close_start) = close_end.checked_sub(CLOSE.len()) else {
+        return false;
+    };
+    let Some(closer) = source.get(close_start..close_end) else {
+        return false;
+    };
+    if !closer.eq_ignore_ascii_case(CLOSE) {
         return false;
     }
-    if close_end < CLOSE.len()
-        || !source[close_end - CLOSE.len()..close_end].eq_ignore_ascii_case(CLOSE)
-    {
+    let Some(before) = source.get(..close_start) else {
         return false;
-    }
-    let close_start = close_end - CLOSE.len();
-    let line_start = source[..close_start]
-        .rfind('\n')
-        .map_or(0, |offset| offset + 1);
-    let prefix = &source[line_start..close_start];
+    };
+    let line_start = before.rfind('\n').map_or(0, |offset| offset + 1);
+    let Some(prefix) = source.get(line_start..close_start) else {
+        return false;
+    };
     prefix.len() > 1
         && prefix.starts_with('=')
         && prefix[1..].chars().all(|ch| matches!(ch, ' ' | '\t'))

@@ -135,6 +135,16 @@ fn scan_raw_at_escapes(source: &str, html: &[RawEscape]) -> Vec<RawEscape> {
                 cursor += 1;
             }
             if let Some(close) = closed {
+                if close == index + 2 {
+                    index = close + 2;
+                    while index + 1 < bytes.len()
+                        && bytes[index] == b'@'
+                        && bytes[index + 1] == b'@'
+                    {
+                        index += 2;
+                    }
+                    continue;
+                }
                 escapes.push(RawEscape {
                     start: index,
                     end: close + 2,
@@ -187,6 +197,13 @@ pub(crate) fn rawold_escapes(source: &str) -> Vec<RawEscape> {
 pub(crate) fn numbered_escapes(source: &str) -> Vec<NumberedEscape> {
     let html = scan_raw_html_escapes(source);
     let at = scan_raw_at_escapes(source, &html);
+    let html: Vec<RawEscape> = html
+        .into_iter()
+        .filter(|escape| {
+            !at.iter()
+                .any(|other| escape.start < other.end && other.start < escape.end)
+        })
+        .collect();
     let rawold = scan_rawold_escapes(source, &html, &at);
     let code_ranges = crate::wikidot_code::active_ranges(source);
 

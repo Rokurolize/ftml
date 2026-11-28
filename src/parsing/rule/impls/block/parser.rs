@@ -1100,9 +1100,16 @@ fn wikidot_attribute_value_raw_elides(value: &str) -> bool {
         rest = &rest[offset..];
         if rest.starts_with("@@") {
             if let Some(end) = rest[2..].find("@@") {
-                let inner = &rest[2..2 + end];
-                if !inner.contains('\n') && !inner.contains('\r') {
-                    return true;
+                if end != 0 {
+                    let inner = &rest[2..2 + end];
+                    if !inner.contains('\n') && !inner.contains('\r') {
+                        return true;
+                    }
+                } else {
+                    while rest.starts_with('@') {
+                        rest = &rest[1..];
+                    }
+                    continue;
                 }
             }
             rest = &rest[2..];

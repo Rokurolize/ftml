@@ -4050,6 +4050,7 @@ fn dash_unit(element: &Element<'_>, admit_link: bool) -> DashUnit {
             _ => DashUnit::Barrier,
         },
         Element::Link { .. } if admit_link => DashUnit::Atom(DASH_ATOM_CHAR),
+        Element::Raw(_) => DashUnit::Atom(DASH_ATOM_CHAR),
         _ => {
             let Some(shell) = FormatShell::from_element(element) else {
                 return DashUnit::Barrier;

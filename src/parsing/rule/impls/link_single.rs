@@ -1708,7 +1708,7 @@ fn wikidot_link_disposition(url: &str) -> WikidotLinkDisposition {
     let Some((scheme, rest)) = url.split_once(':') else {
         return WikidotLinkDisposition::Literal;
     };
-    if !valid_bounded_scheme(scheme) || scheme.eq_ignore_ascii_case("data") {
+    if !valid_bounded_scheme(scheme) {
         return WikidotLinkDisposition::Literal;
     }
     if rest.is_empty() || !wikidot_scheme_target_rest_is_visible(rest) {
@@ -1746,14 +1746,10 @@ fn wikidot_scheme_target_rest_is_visible(rest: &str) -> bool {
 }
 
 fn valid_bounded_scheme(scheme: &str) -> bool {
-    if scheme.is_empty() {
-        return false;
-    }
-    let mut bytes = scheme.bytes();
-    bytes.next().is_some_and(|byte| byte.is_ascii_alphabetic())
-        && bytes.all(|byte| {
-            byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'-' | b'.')
-        })
+    !scheme.is_empty()
+        && scheme
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.'))
 }
 
 fn url_valid(url: &str) -> bool {
@@ -1884,11 +1880,13 @@ mod tests {
 
     #[test]
     fn wikidot_single_link_scheme_scan_accepts_long_valid_schemes() {
-        assert!(valid_bounded_scheme("web+demo"));
+        assert!(!valid_bounded_scheme("web+demo"));
+        assert!(!valid_bounded_scheme("foo-bar"));
         assert!(valid_bounded_scheme(&"a".repeat(65)));
         assert!(valid_bounded_scheme(&"a".repeat(1_024)));
-        assert!(!valid_bounded_scheme("1http"));
-        assert!(!valid_bounded_scheme("java_script"));
+        assert!(valid_bounded_scheme("1http"));
+        assert!(valid_bounded_scheme("java_script"));
+        assert!(valid_bounded_scheme("wikipedia.pl"));
     }
 
     #[test]

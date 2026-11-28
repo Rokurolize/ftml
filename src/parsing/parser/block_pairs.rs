@@ -2689,6 +2689,29 @@ impl<'t> Scanner<'t> {
         }
     }
 
+    fn skip_line_start_math(&self, i: usize) -> Option<usize> {
+        let start = self.tokens[i].span.start;
+        if start > 0 && self.source.as_bytes().get(start - 1) != Some(&b'\n') {
+            return None;
+        }
+        if !self.raw_name_is(i, "math") {
+            return None;
+        }
+        let head = self.read_head(i, false)?;
+        let body_start = self.tokens.get(head.head_end)?.span.start;
+        if !self.source[body_start..].contains("[[/math]]") {
+            return None;
+        }
+        let close_start = crate::parsing::parser::Parser::wikidot_math_designated_end(
+            self.source,
+            body_start,
+        )?;
+        let close_end = self.source[close_start..]
+            .find("]]")
+            .map(|offset| close_start + offset + 2)?;
+        Some(close_end)
+    }
+
     fn scan_head(
         &mut self,
         i: usize,
@@ -2702,6 +2725,9 @@ impl<'t> Scanner<'t> {
                 && self.raw_name_is(i, "code")
             {
                 return self.token_at_or_after(candidate.owner_end);
+            }
+            if let Some(end_byte) = self.skip_line_start_math(i) {
+                return self.token_at_or_after(end_byte);
             }
             if let Some(segment) = self.segment_at(i) {
                 if segment.include_body {

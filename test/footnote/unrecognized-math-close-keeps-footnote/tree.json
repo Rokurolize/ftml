@@ -1,0 +1,32 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "footnote"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "math",
+            "data": {
+                "name": null,
+                "latex-source": "i\n[[/&#109;ath]][[/footnote]]\n[[math]]\ny"
+            }
+        }
+    ]
+}

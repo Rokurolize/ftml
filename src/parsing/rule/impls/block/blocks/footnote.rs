@@ -1620,16 +1620,20 @@ mod tests {
     }
 
     #[test]
-    fn wikidot_footnote_from_table_header_leaves_math_block_literal() {
-        let (html, _) = render_wikidot(
+    fn wikidot_footnote_from_table_header_renders_math_block() {
+        let (html, errors) = render_wikidot(
             "||~ N ||~ x[[footnote]]\n[[math]]\nx^2\n[[/math]] tail\n[[/footnote]]||\n|| a ||\n\n[[footnoteblock]]",
         );
 
+        assert!(errors.is_empty(), "{errors:#?}");
         assert!(html.contains("<th>x<sup class=\"footnoteref\""), "{html}");
-        assert!(!html.contains("class=\"math-equation\""), "{html}");
-        assert!(html.contains("[[math]]<br />"), "{html}");
-        assert!(html.contains("x^2<br />"), "{html}");
-        assert!(html.contains("[[/math]] tail"), "{html}");
+        assert!(html.contains("class=\"math-equation\""), "{html}");
+        assert!(
+            html.contains("\\begin{equation} x^2 \\end{equation}"),
+            "{html}"
+        );
+        assert!(html.contains("<p>tail</p>"), "{html}");
+        assert!(!html.contains("[[math]]"), "{html}");
     }
 
     #[test]

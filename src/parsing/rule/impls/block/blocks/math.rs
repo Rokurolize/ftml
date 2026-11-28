@@ -50,6 +50,16 @@ fn parse_fn<'r, 't>(
     if parser.settings().layout.legacy()
         && parser.in_footnote()
         && math_opener_starts_line(parser, opener_start)
+        && wikidot_math_adjacent_footnote_close(parser, opener_start)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    if parser.settings().layout.legacy()
+        && parser.in_footnote()
+        && !math_opener_starts_line(parser, opener_start)
+        && wikidot_math_opener_line_has_body(parser, opener_start)
+        && !wikidot_math_has_close_before_footnote_close(parser, opener_start)
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }
@@ -118,6 +128,55 @@ fn parse_fn<'r, 't>(
 fn math_opener_starts_line(parser: &Parser<'_, '_>, opener_start: usize) -> bool {
     opener_start == 0
         || parser.full_text().inner().as_bytes().get(opener_start - 1) == Some(&b'\n')
+}
+
+fn wikidot_math_adjacent_footnote_close(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
+    const CLOSER: &str = "[[/math]]";
+    const FOOTNOTE_CLOSER: &str = "[[/footnote]]";
+    let source = parser.full_text().inner();
+    let Some(rest) = source.get(opener_start + "[[math".len()..) else {
+        return false;
+    };
+    let Some(offset) = rest.to_ascii_lowercase().find(CLOSER) else {
+        return false;
+    };
+    let after = &rest[offset + CLOSER.len()..];
+    after
+        .get(..FOOTNOTE_CLOSER.len())
+        .is_some_and(|tail| tail.eq_ignore_ascii_case(FOOTNOTE_CLOSER))
+}
+
+fn wikidot_math_opener_line_has_body(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let Some(offset) = source.get(opener_start..).and_then(|rest| rest.find("]]")) else {
+        return false;
+    };
+    let after_head = &source[opener_start + offset + 2..];
+    let line = after_head.split('\n').next().unwrap_or(after_head);
+    line.chars().any(|character| !character.is_whitespace())
+}
+
+fn wikidot_math_has_close_before_footnote_close(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
+    const CLOSER: &str = "[[/math]]";
+    const FOOTNOTE_CLOSER: &str = "[[/footnote]]";
+    let source = parser.full_text().inner();
+    let Some(after_opener) = source.get(opener_start + "[[math".len()..) else {
+        return false;
+    };
+    let lowered = after_opener.to_ascii_lowercase();
+    let Some(footnote_close) = lowered.find(FOOTNOTE_CLOSER) else {
+        return true;
+    };
+    lowered[..footnote_close].contains(CLOSER)
 }
 
 struct MathHead<'t> {

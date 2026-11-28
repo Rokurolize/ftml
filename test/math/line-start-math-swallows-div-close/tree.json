@@ -1,0 +1,32 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "text",
+                        "data": "[["
+                    },
+                    {
+                        "element": "text",
+                        "data": "div"
+                    },
+                    {
+                        "element": "text",
+                        "data": "]]"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "math",
+            "data": {
+                "name": null,
+                "latex-source": "[[/div]]"
+            }
+        }
+    ]
+}

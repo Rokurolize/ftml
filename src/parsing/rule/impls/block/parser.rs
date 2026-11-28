@@ -2582,6 +2582,26 @@ where
 
             let end_start = parser.current().span.start;
             if parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && block_rule.name == "block-div"
+                && Self::wikidot_math_swallows_closer(
+                    parser.full_text().inner(),
+                    end_start,
+                )
+            {
+                return Ok(false);
+            }
+            if parser.settings().layout.legacy()
+                && !parser.discarding_hidden_body()
+                && block_rule.name == "block-footnote"
+                && Self::wikidot_at_run_spans_footnote_boundary(
+                    parser.full_text().inner(),
+                    end_start,
+                )
+            {
+                return Ok(false);
+            }
+            if parser.settings().layout.legacy()
                 && block_rule.name == "block-footnote"
                 && parser.current().token == Token::LeftBlockEnd
                 && parser
@@ -5658,7 +5678,10 @@ where
         found
     }
 
-    fn wikidot_math_designated_end(text: &str, body_start: usize) -> Option<usize> {
+    pub(crate) fn wikidot_math_designated_end(
+        text: &str,
+        body_start: usize,
+    ) -> Option<usize> {
         let mut j = body_start;
         if j > 0 && text.as_bytes().get(j - 1) == Some(&b'\n') {
             j -= 1;
@@ -5691,6 +5714,56 @@ where
             return Self::wikidot_math_prev_valid_closer(text, close_start);
         }
         Some(close_start)
+    }
+
+    fn wikidot_at_run_spans_footnote_boundary(text: &str, close_start: usize) -> bool {
+        const CLOSER: &str = "[[/footnote]]";
+        const OPENER: &str = "[[footnote]]";
+        let Some(prefix) = text.get(..close_start) else {
+            return false;
+        };
+        let prefix = prefix.trim_end_matches([' ', '\t', '\r', '\n']);
+        if !prefix.ends_with("@@") {
+            return false;
+        }
+        let Some(suffix) = text
+            .get(close_start + CLOSER.len()..)
+            .and_then(|rest| rest.get(..rest.len().min(512)))
+        else {
+            return false;
+        };
+        let Some(next_opener) = suffix.find(OPENER) else {
+            return false;
+        };
+        let Some(next_run) = suffix.find("@@") else {
+            return false;
+        };
+        let Some(next_closer) = suffix.find(CLOSER) else {
+            return false;
+        };
+        next_opener < next_run && next_run < next_closer
+    }
+
+    fn wikidot_math_swallows_closer(text: &str, closer_start: usize) -> bool {
+        const OPENER: &str = "[[math";
+        let window_start = closer_start.saturating_sub(16384);
+        let Some(offset) = text[window_start..closer_start].rfind(OPENER) else {
+            return false;
+        };
+        let opener = window_start + offset;
+        if opener > 0 && text.as_bytes()[opener - 1] != b'\n' {
+            return false;
+        }
+        let Some(line_end) = text[opener..closer_start].find('\n') else {
+            return false;
+        };
+        let line = &text[opener..opener + line_end];
+        let Some(head_end) = line.find("]]") else {
+            return false;
+        };
+        let body_start = opener + head_end + 2;
+        Self::wikidot_math_designated_end(text, body_start)
+            .is_some_and(|end| end > closer_start)
     }
 
     fn wikidot_math_clean_closer_line(rest: &str) -> bool {

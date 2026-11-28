@@ -1,0 +1,20 @@
+[
+    {
+        "token": "line-break",
+        "rule": "raw",
+        "span": [
+            71,
+            72
+        ],
+        "kind": "rule-failed"
+    },
+    {
+        "token": "raw",
+        "rule": "fallback",
+        "span": [
+            56,
+            58
+        ],
+        "kind": "no-rules-match"
+    }
+]

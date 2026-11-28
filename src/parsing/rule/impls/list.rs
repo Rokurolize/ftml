@@ -93,7 +93,7 @@ fn wikidot_control_only_marker_line(source: &str, marker_start: usize) -> bool {
         })
         && rest.chars().any(|character| {
             matches!(character as u32,
-                0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1a | 0x1c..=0x1f)
+                0x01..=0x08 | 0x0e..=0x1a | 0x1c..=0x1f)
         })
 }
 

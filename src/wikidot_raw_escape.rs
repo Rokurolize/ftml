@@ -49,18 +49,34 @@ fn scan_raw_html_escapes(source: &str) -> Vec<RawEscape> {
     let bytes = source.as_bytes();
     let mut escapes = Vec::new();
     let mut index = 0;
+    let mut unclosed_line_end = None;
     while index + 1 < bytes.len() {
-        if bytes[index] == b'@'
-            && bytes[index + 1] == b'<'
-            && let Some(relative) = source[index + 2..]
-                .split(['\n', '\r'])
-                .next()
-                .and_then(|line| line.find(">@"))
-        {
-            let end = index + 2 + relative + 2;
-            escapes.push(RawEscape { start: index, end });
-            index = end;
-            continue;
+        if bytes[index] == b'@' && bytes[index + 1] == b'<' {
+            if unclosed_line_end.is_some_and(|end| index < end) {
+                index += 1;
+                continue;
+            }
+
+            let mut probe = index + 2;
+            let mut close = None;
+            while probe + 1 < bytes.len() {
+                if matches!(bytes[probe], b'\n' | b'\r') {
+                    break;
+                }
+                if bytes[probe] == b'>' && bytes[probe + 1] == b'@' {
+                    close = Some(probe);
+                    break;
+                }
+                probe += 1;
+            }
+
+            if let Some(close) = close {
+                let end = close + 2;
+                escapes.push(RawEscape { start: index, end });
+                index = end;
+                continue;
+            }
+            unclosed_line_end = Some(probe);
         }
         index += 1;
     }

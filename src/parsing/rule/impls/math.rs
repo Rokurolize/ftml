@@ -25,6 +25,7 @@ use super::raw::RULE_RAW;
 use crate::parsing::collect::consume_valid_comment;
 use crate::parsing::parser::closer_scan::count_scan_token_visit;
 use crate::parsing::{discard_wikidot_controls, trim_wikidot_ascii_cow};
+use crate::tree::PartialElement;
 use std::borrow::Cow;
 
 pub const RULE_MATH: Rule = Rule {
@@ -37,6 +38,9 @@ pub const RULE_MATH: Rule = Rule {
 struct WikidotMathSource<'t> {
     latex_source: Cow<'t, str>,
     residual_closer: &'t str,
+    closed_outer_span: bool,
+    closed_outer_size: bool,
+    closed_outer_anchor: bool,
 }
 
 fn try_consume_fn<'r, 't>(
@@ -47,6 +51,9 @@ fn try_consume_fn<'r, 't>(
     let WikidotMathSource {
         latex_source,
         residual_closer,
+        closed_outer_span,
+        closed_outer_size,
+        closed_outer_anchor,
     } = if parser.settings().layout.legacy() {
         collect_wikidot_math_source(parser)?
     } else {
@@ -60,14 +67,40 @@ fn try_consume_fn<'r, 't>(
                 collect_text(parser, RULE_MATH, &close, &invalid, None)?.trim(),
             ),
             residual_closer: "",
+            closed_outer_span: false,
+            closed_outer_size: false,
+            closed_outer_anchor: false,
         }
     };
 
     let element = Element::MathInline { latex_source };
-    if residual_closer.is_empty() {
+    if residual_closer.is_empty()
+        && !closed_outer_span
+        && !closed_outer_size
+        && !closed_outer_anchor
+    {
         success_elements(element)
     } else {
-        success_elements(vec![element, text!(residual_closer)])
+        let mut out = vec![element];
+        if !residual_closer.is_empty() {
+            out.push(text!(residual_closer));
+        }
+        if closed_outer_span {
+            out.push(Element::Partial(PartialElement::InlineSpanClose(cow!(
+                "[[/span]]"
+            ))));
+        }
+        if closed_outer_size {
+            out.push(Element::Partial(PartialElement::InlineSizeClose(cow!(
+                "[[/size]]"
+            ))));
+        }
+        if closed_outer_anchor {
+            out.push(Element::Partial(PartialElement::InlineAnchorClose(cow!(
+                "[[/a]]"
+            ))));
+        }
+        success_elements(out)
     }
 }
 
@@ -98,6 +131,15 @@ where
     let mut segment_start = start;
     let mut comment_elided = None::<String>;
     let mut suppress_formula = false;
+    let mut span_open = false;
+    let mut size_open = false;
+    let mut a_open = false;
+    let in_span = parser.in_wikidot_span_body();
+    let in_size = parser.in_wikidot_size_body();
+    let in_anchor = parser.in_wikidot_anchor_body();
+    let mut closed_outer_span = false;
+    let mut closed_outer_size = false;
+    let mut closed_outer_anchor = false;
     // Only needed to decide whether this walk may be memoized.
     let mut saw_jump = false;
 
@@ -107,10 +149,21 @@ where
             Token::RightMath => {
                 let end = parser.current().span.start;
                 parser.step()?;
+                if !suppress_formula
+                    && (span_open || size_open || a_open)
+                    && wikidot_math_tail_closes_open_inline(
+                        parser, span_open, size_open, a_open,
+                    )
+                {
+                    suppress_formula = true;
+                }
                 if suppress_formula {
                     return Ok(WikidotMathSource {
                         latex_source: Cow::Borrowed(""),
                         residual_closer: "",
+                        closed_outer_span,
+                        closed_outer_size,
+                        closed_outer_anchor,
                     });
                 }
                 let latex_source = match comment_elided {
@@ -125,6 +178,9 @@ where
                 return Ok(WikidotMathSource {
                     latex_source,
                     residual_closer: "",
+                    closed_outer_span,
+                    closed_outer_size,
+                    closed_outer_anchor,
                 });
             }
 
@@ -187,6 +243,9 @@ where
                     return Ok(WikidotMathSource {
                         latex_source,
                         residual_closer,
+                        closed_outer_span,
+                        closed_outer_size,
+                        closed_outer_anchor,
                     });
                 }
             }
@@ -213,6 +272,35 @@ where
                 if wikidot_image_block_opens(parser) {
                     suppress_formula = true;
                     parser.mark_wikidot_math_image_occupied();
+                } else if let Some((name, actionable)) =
+                    wikidot_math_inline_block_open(parser)
+                    && actionable
+                {
+                    span_open |= name.eq_ignore_ascii_case("span");
+                    size_open |= name.eq_ignore_ascii_case("size");
+                    a_open |= name.eq_ignore_ascii_case("a");
+                }
+                parser.step()?;
+            }
+
+            Token::LeftBlockEnd => {
+                let mut close = parser.clone();
+                if let Ok((name, _)) = close.get_wikidot_end_block_with_residual() {
+                    if !span_open && in_span && name.eq_ignore_ascii_case("span") {
+                        suppress_formula = true;
+                        closed_outer_span = true;
+                    } else if !size_open && in_size && name.eq_ignore_ascii_case("size") {
+                        suppress_formula = true;
+                        closed_outer_size = true;
+                    } else if !a_open && in_anchor && name.eq_ignore_ascii_case("a") {
+                        suppress_formula = true;
+                        closed_outer_anchor = true;
+                    } else if (span_open && name.eq_ignore_ascii_case("span"))
+                        || (size_open && name.eq_ignore_ascii_case("size"))
+                        || (a_open && name.eq_ignore_ascii_case("a"))
+                    {
+                        suppress_formula = true;
+                    }
                 }
                 parser.step()?;
             }
@@ -233,6 +321,9 @@ where
                 return Ok(WikidotMathSource {
                     latex_source,
                     residual_closer: "",
+                    closed_outer_span,
+                    closed_outer_size,
+                    closed_outer_anchor,
                 });
             }
 
@@ -270,6 +361,79 @@ where
             _ => {
                 parser.step()?;
             }
+        }
+    }
+}
+
+fn wikidot_math_inline_block_open<'r, 't>(
+    parser: &Parser<'r, 't>,
+) -> Option<(String, bool)>
+where
+    'r: 't,
+{
+    let mut opener = parser.clone();
+    let (name, in_head, segment) = opener.get_block_name(false).ok()?;
+    let name_owned = name.into_owned();
+    let borrowed = matches!(
+        name_owned.as_str(),
+        "span" | "size" | "a" | "SPAN" | "SIZE" | "A"
+    );
+    if in_head {
+        loop {
+            match opener.current().token {
+                Token::RightBlock => {
+                    let _ = opener.step();
+                    break;
+                }
+                Token::RightLink if opener.current().slice == "]]]" => {
+                    let _ = opener.step();
+                    break;
+                }
+                Token::RightBracket
+                | Token::RightLink
+                | Token::LineBreak
+                | Token::ParagraphBreak
+                | Token::InputEnd => return None,
+                _ => {
+                    opener.step().ok()?;
+                }
+            }
+        }
+    }
+    let actionable = opener.head_word_is_actionable(&name_owned, borrowed, segment);
+    Some((name_owned, actionable))
+}
+
+fn wikidot_math_tail_closes_open_inline<'r, 't>(
+    parser: &Parser<'r, 't>,
+    span_open: bool,
+    size_open: bool,
+    a_open: bool,
+) -> bool
+where
+    'r: 't,
+{
+    let mut scan = parser.clone();
+    loop {
+        match scan.current().token {
+            Token::LeftBlockEnd => {
+                let mut close = scan.clone();
+                if let Ok((name, _)) = close.get_wikidot_end_block_with_residual() {
+                    if (span_open && name.eq_ignore_ascii_case("span"))
+                        || (size_open && name.eq_ignore_ascii_case("size"))
+                        || (a_open && name.eq_ignore_ascii_case("a"))
+                    {
+                        return true;
+                    }
+                    scan.update(&close);
+                    continue;
+                }
+            }
+            Token::ParagraphBreak | Token::InputEnd => return false,
+            _ => {}
+        }
+        if scan.step().is_err() {
+            return false;
         }
     }
 }

@@ -1022,6 +1022,27 @@ struct BibliographyLowering<'b, 't> {
     lowered: &'b mut Vec<bool>,
 }
 
+fn wrap_post_module_span_size_runs<'t>(elements: &mut [Element<'t>]) {
+    let mut index = 1;
+    while index < elements.len() {
+        if matches!(elements[index - 1], Element::Module(_))
+            && matches!(
+                &elements[index],
+                Element::Container(c)
+                    if matches!(c.ctype(), ContainerType::Span | ContainerType::Size)
+            )
+        {
+            let elem = mem::replace(&mut elements[index], Element::LineBreak);
+            elements[index] = Element::Container(Container::new(
+                ContainerType::Paragraph,
+                vec![elem],
+                AttributeMap::new(),
+            ));
+        }
+        index += 1;
+    }
+}
+
 #[cfg(test)]
 fn lower_wikidot_inline_size_scopes<'t>(elements: &mut Vec<Element<'t>>) {
     lower_wikidot_inline_size_scopes_with_bibliographies(elements, None, false);
@@ -1071,6 +1092,7 @@ pub(crate) fn lower_wikidot_inline_size_scopes_with_bibliographies<'t>(
     );
     drop_empty_inline_scopes(elements);
     drop_vanished_paragraphs(elements);
+    wrap_post_module_span_size_runs(elements);
     split_lists_out_of_paragraphs(elements);
     splice_wikidot_foster(elements);
     rewrite_block_chunk_prefix(elements, BlockChunkCtx::Block);
@@ -4686,8 +4708,12 @@ fn lower_root_sequence<'t>(
                 );
             let reopens_paragraph_after_separator = starts_in_inline_scope
                 && output.last().is_some_and(|element| {
-                    matches!(element, Element::HorizontalRule | Element::ClearFloat(_))
-                        || element.is_content_separator()
+                    matches!(
+                        element,
+                        Element::HorizontalRule
+                            | Element::ClearFloat(_)
+                            | Element::Module(_)
+                    ) || element.is_content_separator()
                 });
             let follows_table = matches!(
                 output.last(),
@@ -5300,7 +5326,11 @@ fn flush_root_pending<'t>(
     if scope_open_at_start
         && matches!(
             output.last(),
-            Some(Element::Table(_) | Element::BibliographyBlock { .. })
+            Some(
+                Element::Table(_)
+                    | Element::BibliographyBlock { .. }
+                    | Element::Module(_)
+            )
         )
     {
         if wrap_crossed_head {
@@ -6889,7 +6919,10 @@ fn lower_sequence<'t>(
         } else if has_lowerable_children(&element)
             || matches!(
                 element,
-                Element::Code(_) | Element::Math { .. } | Element::TableOfContents { .. }
+                Element::Code(_)
+                    | Element::Math { .. }
+                    | Element::Module(_)
+                    | Element::TableOfContents { .. }
             )
         {
             if matches!(element, Element::Table(_)) {
@@ -7076,6 +7109,14 @@ fn lower_sequence<'t>(
                         {
                             *wikidot_block_open_elements = active.nested_empty_copies();
                             if let Some(position) = active.anchor_position() {
+                                active.kill_from(position);
+                            }
+                        }
+                        if matches!(element, Element::Module(_)) {
+                            *trim_next_break = true;
+                            if active.has_anchor_scope()
+                                && let Some(position) = active.anchor_position()
+                            {
                                 active.kill_from(position);
                             }
                         }
@@ -8114,6 +8155,7 @@ fn parent_is_block_segment(element: &Element<'_>) -> bool {
         | Element::WikidotBlockFrame { .. }
         | Element::Code(_)
         | Element::Math { .. }
+        | Element::Module(_)
         | Element::DefinitionList(_) => true,
         Element::Partial(partial) => matches!(
             partial,

@@ -215,6 +215,14 @@ fn try_consume_fn<'r, 't>(
     }
 
     if parser.settings().layout.legacy()
+        && elements
+            .iter()
+            .any(|element| matches!(element, Element::Module(_)))
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+
+    if parser.settings().layout.legacy()
         && matches!(elements.as_slice(), [Element::Table(_)])
     {
         let opening = Element::Container(Container::new(

@@ -55,6 +55,17 @@ fn wikidot_raw_has_preceding_content(
     before[block_start..].chars().any(|c| !c.is_whitespace())
 }
 
+fn wikidot_raw_heading_prefix_only(parser: &Parser<'_, '_>, opener_start: usize) -> bool {
+    let source = parser.full_text().inner();
+    let before = &source[..opener_start.min(source.len())];
+    let line_start = before.rfind('\n').map_or(0, |index| index + 1);
+    let line = source[line_start..opener_start].trim_start_matches([' ', '\t']);
+    let Some(rest) = line.strip_prefix('+').or_else(|| line.strip_prefix('=')) else {
+        return false;
+    };
+    rest.trim_matches([' ', '\t']).is_empty()
+}
+
 fn wikidot_footnote_claimable<'r, 't>(parser: &Parser<'r, 't>) -> bool
 where
     'r: 't,
@@ -80,6 +91,25 @@ fn try_consume_fn<'r, 't>(
         Token::LeftRaw => Token::RightRaw,
         _ => panic!("Current token is not a starting raw"),
     };
+
+    if parser.settings().layout.legacy()
+        && ending_token == Token::Raw
+        && !wikidot_raw_has_preceding_content(parser, opener_start)
+    {
+        let source = parser.full_text().inner();
+        let run_end = opener_start
+            + source[opener_start..]
+                .bytes()
+                .take_while(|byte| *byte == b'@')
+                .count();
+        if run_end - opener_start >= 10 {
+            while parser.current().span.start < run_end {
+                parser.step()?;
+            }
+            let literal = "@".repeat(run_end - opener_start - 4);
+            return ok!(Element::Text(Cow::Owned(literal)));
+        }
+    }
 
     if ending_token == Token::Raw {
         trace!("First token is '@@', checking for special cases");
@@ -298,6 +328,7 @@ fn try_consume_fn<'r, 't>(
             && ending_token == Token::Raw
             && token == Token::LeftBlock
             && wikidot_raw_has_preceding_content(parser, opener_start)
+            && !wikidot_raw_heading_prefix_only(parser, opener_start)
             && super::footnote_first::starts_footnote(parser)
             && wikidot_footnote_claimable(parser)
         {

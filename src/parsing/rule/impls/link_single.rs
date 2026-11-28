@@ -233,6 +233,7 @@ where
 
     let (url, authored_prefix_has_link_authority, target_end) =
         collect_wikidot_target(parser)?;
+    let preserve_leading_space = url.ends_with('|');
     wikidot_link_from_target(
         parser,
         target,
@@ -240,7 +241,7 @@ where
         target_end,
         authored_prefix_has_link_authority,
         false,
-        true,
+        preserve_leading_space,
     )
 }
 

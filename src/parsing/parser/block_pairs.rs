@@ -1826,10 +1826,7 @@ impl<'t> Scanner<'t> {
         openers > 0 && closes <= openers
     }
 
-    fn spaced_close_head(&self, closer_index: usize, kind: WikidotBlockKind) -> bool {
-        if kind != WikidotBlockKind::Div {
-            return false;
-        }
+    fn spaced_close_head(&self, closer_index: usize) -> bool {
         let start = self.tokens[closer_index].span.start;
         let Some(rest) = self.source.get(start..) else {
             return false;
@@ -1919,18 +1916,19 @@ impl<'t> Scanner<'t> {
             .collect::<BTreeSet<_>>();
         self.pairs
             .retain(|pair| !defeating_attributed_div_heads.contains(&pair.head));
-        let quoted_spaced_div_closers = self
+        let spaced_closers = self
             .pairs
             .iter()
             .filter(|pair| {
-                pair.kind == WikidotBlockKind::Div
-                    && self.line_quote_depth(pair.closer) > 0
-                    && self.spaced_close_head(pair.closer, pair.kind)
+                self.spaced_close_head(pair.closer)
+                    && (self.on_heading_line(pair.closer)
+                        || (pair.kind == WikidotBlockKind::Div
+                            && self.line_quote_depth(pair.closer) > 0))
             })
             .map(|pair| pair.closer)
             .collect::<BTreeSet<_>>();
         self.pairs
-            .retain(|pair| !quoted_spaced_div_closers.contains(&pair.closer));
+            .retain(|pair| !spaced_closers.contains(&pair.closer));
         for pair in &mut self.pairs {
             pair.closer_byte = self.tokens[pair.closer].span.start;
         }

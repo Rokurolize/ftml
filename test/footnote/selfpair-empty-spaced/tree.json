@@ -1,0 +1,30 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "footnote",
+                        "data": 1
+                    },
+                    {
+                        "element": "text",
+                        "data": " "
+                    },
+                    {
+                        "element": "footnote",
+                        "data": 2
+                    }
+                ]
+            }
+        }
+    ],
+    "footnotes": [
+        [],
+        []
+    ],
+    "needs-footnote-block": true
+}

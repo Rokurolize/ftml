@@ -485,8 +485,8 @@ fn try_recover_wikidot_div_literal<'r, 't>(
     arguments_empty: bool,
     body_start: BlockBodyStart,
     flag_score: bool,
-    head_started_physical_line: bool,
     follows_inline_structural_close: bool,
+    inline_surplus: bool,
 ) -> Result<Option<ParseSuccess<'r, 't, Elements<'t>>>, ParseError>
 where
     'r: 't,
@@ -494,6 +494,8 @@ where
     if !parser.settings().layout.legacy() {
         return Ok(None);
     }
+    let head_started_physical_line =
+        wikidot_div_head_started_physical_line(parser, body_start);
     if parser.head_had_segment() && body_start == BlockBodyStart::Inline {
         return Ok(None);
     }
@@ -514,6 +516,7 @@ where
         && (!flag_score || inline_scored_line_literal)
         && !wikidot_div_line_has_segment(parser, owner_start)
         && !wikidot_div_head_recovers_as_plain_fallback(parser, owner_start)
+        && !inline_surplus
     {
         let line_start = source[..owner_start]
             .rfind('\n')
@@ -1562,6 +1565,9 @@ fn parse_fn<'r, 't>(
     let before_head_break = parser.clone();
     let head = parser.get_head_map_with_body_start_wikidot(&BLOCK_DIV, in_head)?;
     let (mut arguments, mut body_start) = head;
+    let attributed_inline_surplus = !flag_score
+        && (!arguments.is_empty() || arguments.has_empty_key())
+        && parser.wikidot_div_opener_has_inline_surplus(opener_start);
     let source_bytes = parser.full_text().inner().as_bytes();
     let mut head_end = parser.current().span.start;
     while head_end > opener_start
@@ -1759,7 +1765,7 @@ fn parse_fn<'r, 't>(
                 parser.step()?;
             }
             body_start = BlockBodyStart::NextPhysicalLine;
-        } else if !parser.in_native_blockquote_line() {
+        } else if !parser.in_native_blockquote_line() && !attributed_inline_surplus {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
     }
@@ -1792,8 +1798,8 @@ fn parse_fn<'r, 't>(
         arguments.is_empty(),
         body_start,
         flag_score,
-        head_started_physical_line,
         follows_inline_structural_close,
+        attributed_inline_surplus,
     )? {
         return Ok(recovered);
     }
@@ -1810,6 +1816,7 @@ fn parse_fn<'r, 't>(
         && !parser.in_native_blockquote_line()
         && (!parser.has_body_end_block_on_line(&BLOCK_DIV)
             || parser.wikidot_div_opener_is_excess_for_inline(opener_start))
+        && !attributed_inline_surplus
     {
         if !flag_score
             && !parser.has_body_end_block_on_line(&BLOCK_DIV)
@@ -1844,7 +1851,7 @@ fn parse_fn<'r, 't>(
     }
     if parser.settings().layout.legacy()
         && body_start == BlockBodyStart::Inline
-        && parser.in_wikidot_div_body()
+        && (parser.in_wikidot_div_body() || attributed_inline_surplus)
         && head_started_physical_line
         && !parser.in_native_blockquote_line()
         && !flag_score

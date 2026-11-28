@@ -283,6 +283,22 @@ impl Parser<'_, '_> {
     }
 
     #[inline]
+    pub(crate) fn wikidot_div_opener_has_inline_surplus(
+        &self,
+        opener_start: usize,
+    ) -> bool {
+        self.block_end_scan_cache
+            .borrow()
+            .wikidot_div_stream_marks
+            .get(&opener_start)
+            .is_some_and(
+                |&(balance_before, _, own_line_closers, ends_after_document)| {
+                    ends_after_document.saturating_sub(own_line_closers) > balance_before
+                },
+            )
+    }
+
+    #[inline]
     pub(crate) fn enter_wikidot_div_body(&mut self) {
         self.wikidot.div_body_depth = self.wikidot.div_body_depth.saturating_add(1);
     }

@@ -1,0 +1,59 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "footnote",
+                        "data": 1
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "footnote",
+                        "data": 2
+                    }
+                ]
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "raw",
+                "data": "x"
+            },
+            {
+                "element": "text",
+                "data": "@@y"
+            },
+            {
+                "element": "raw",
+                "data": "[[/footnote]] [[footnote]]"
+            },
+            {
+                "element": "text",
+                "data": "x"
+            },
+            {
+                "element": "text",
+                "data": "y"
+            },
+            {
+                "element": "text",
+                "data": "@@"
+            }
+        ],
+        [
+            {
+                "element": "text",
+                "data": "a"
+            }
+        ]
+    ],
+    "needs-footnote-block": true
+}

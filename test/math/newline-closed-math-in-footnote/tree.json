@@ -1,0 +1,43 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "footnote",
+                        "data": 1
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "text",
+                        "data": "z"
+                    }
+                ]
+            }
+        },
+        {
+            "element": "math",
+            "data": {
+                "name": null,
+                "latex-source": "y"
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "math",
+                "data": {
+                    "name": null,
+                    "latex-source": "x"
+                }
+            }
+        ]
+    ],
+    "needs-footnote-block": true
+}

@@ -1,0 +1,67 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "paragraph",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "footnote",
+                        "data": 1
+                    },
+                    {
+                        "element": "line-break"
+                    },
+                    {
+                        "element": "footnote",
+                        "data": 2
+                    }
+                ]
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "math",
+                "data": {
+                    "name": null,
+                    "latex-source": "i\n[[/footnote]]\n[[math]]\ny"
+                }
+            },
+            {
+                "element": "container",
+                "data": {
+                    "type": "paragraph",
+                    "attributes": {},
+                    "elements": [
+                        {
+                            "element": "text",
+                            "data": "[["
+                        },
+                        {
+                            "element": "text",
+                            "data": "footnote"
+                        },
+                        {
+                            "element": "text",
+                            "data": "]]"
+                        },
+                        {
+                            "element": "text",
+                            "data": "z"
+                        }
+                    ]
+                }
+            }
+        ],
+        [
+            {
+                "element": "text",
+                "data": "w"
+            }
+        ]
+    ],
+    "needs-footnote-block": true
+}

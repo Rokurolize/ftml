@@ -333,6 +333,7 @@ fn try_consume_fn<'r, 't>(
             && token == Token::LeftBlock
             && wikidot_raw_has_preceding_content(parser, opener_start)
             && !wikidot_raw_heading_prefix_only(parser, opener_start)
+            && !parser.in_footnote()
             && super::footnote_first::starts_footnote(parser)
             && wikidot_footnote_claimable(parser)
         {

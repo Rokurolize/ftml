@@ -99,6 +99,7 @@ const WIKIDOT_MATH_ENVIRONMENTS: &[&str] = &[
     "split",
     "gathered",
     "aligned",
+    "alignedat",
     "alignat",
     "array",
 ];

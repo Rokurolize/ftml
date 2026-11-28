@@ -3856,10 +3856,10 @@ where
             return false;
         };
         let trimmed = line.trim_matches([' ', '\t', '\r']);
-        trimmed.len() == name.len() + 5
-            && trimmed.starts_with("[[/")
-            && trimmed.ends_with("]]")
-            && trimmed[3..trimmed.len() - 2].eq_ignore_ascii_case(name)
+        trimmed
+            .strip_prefix("[[/")
+            .and_then(|inner| inner.strip_suffix("]]"))
+            .is_some_and(|inner| inner.eq_ignore_ascii_case(name))
     }
 
     /// g10res: when the vanished tail `[[/li]]` ends a run of 3+

@@ -67,8 +67,8 @@
 //! Alternatively, you can [get in touch with Wikijump developers directly](https://github.com/scpwiki/wikijump#readme).
 //!
 //! [`Render`]: ./render/trait.Render.html
-//! [`TextRender`]: ./render/html/struct.HtmlRender.html
-//! [`HtmlRender`]: ./render/text/struct.TextRender.html
+//! [`TextRender`]: ./render/text/struct.TextRender.html
+//! [`HtmlRender`]: ./render/html/struct.HtmlRender.html
 //! [`serde`]: https://docs.rs/serde
 //! [`wasm-pack`]: https://rustwasm.github.io/docs/wasm-pack/
 

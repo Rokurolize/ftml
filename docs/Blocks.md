@@ -29,7 +29,7 @@ Like block names, argument keys are case-insensitive.
 
 ### Newlines
 
-Blocks may accept deliminated newlines. While these blocks can be used inline, separating them on their own lines will not produce line breaks. For instance:
+Blocks may accept delimited newlines. While these blocks can be used inline, separating them on their own lines will not produce line breaks. For instance:
 
 The `[[div]]` block accepts separate newlines. These two constructions are the same:
 
@@ -74,7 +74,7 @@ See [Modules](Modules.md) for information on each module currently implemented.
 
 ## List of Blocks
 
-A list of all blocks and their attributes is available at [`conf/blocks.toml`](../conf/blocks.toml) (with an explanation of the format in [`conf/blocks.schema.toml`](../conf/blocks.schema.toml). The local configuration check keeps its block names and aliases in step with the rule registry.
+A list of all blocks and their attributes is available at [`conf/blocks.toml`](../conf/blocks.toml) (with an explanation of the format in [`conf/blocks.schema.toml`](../conf/blocks.schema.toml)). The local configuration check keeps its block names and aliases in step with the rule registry.
 
 In `Layout::Wikidot`, `bibliography`, `code`, `gallery`, `math`, `module`, and `toc` own a physical line only when their opener starts at column zero. A space, tab, or text prefix keeps the syntax literal. `Layout::Wikijump` retains its whitespace-prefixed behavior.
 
@@ -84,7 +84,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 
 | Block Name                                      | Accepted Names                   | Star? | Score? | Newlines? | Argument Type | Body Type |
 |-------------------------------------------------|----------------------------------|-------|--------|-----------|---------------|-----------|
-| [Anchor](#anchor)                               | `a`, `anchor`                    | No    | Yes    | No        | Map           | Elements  |
+| [Anchor](#anchor)                               | `a`, `anchor`                    | Yes   | Yes    | No        | Map           | Elements  |
 | [Audio](#audio)                                 | `audio`                          | No    | No     | No        | Value + Map   | None      |
 | [Bibliography Citation](#bibliography-citation) | `bibcite`                        | No    | Yes    | No        | Value         | None      |
 | [Bibliography](#bibliography-block)             | `bibliography`                   | No    | No     | Yes       | Map           | (See below) |
@@ -103,9 +103,10 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | EmbedVideo                                      | `embedvideo`                     | No    | No     | No        | None          | Raw       |
 | [Equation Reference](#equation-ref)             | `equation`, `eref`, `eqref`      | No    | No     | No        | Value         | None      |
 | [File](#file)                                   | `file`                           | No    | No     | No        | Value         | None      |
-| Gallery                                         | `gallery`                        | No    | No     | Yes       | Map           | Raw       |
 | [Footnote](#footnote)                           | `footnote`                       | No    | No     | No        | None          | Elements  |
 | [Footnote Block](#footnote-block)               | `footnoteblock`                  | No    | No     | Yes       | Map           | None      |
+| [Form](#form)                                   | `form`                           | No    | No     | No        | None          | Raw       |
+| Gallery                                         | `gallery`                        | No    | No     | Yes       | Map           | Raw       |
 | [Hidden](#hidden)                               | `hidden`                         | No    | No     | Yes       | Map           | Elements  |
 | [HTML](#html)                                   | `html`                           | No    | No     | Yes       | Map           | Raw       |
 | [IfCategory](#ifcategory)                       | `ifcategory`                     | No    | No     | Yes       | Value         | Elements  |
@@ -130,7 +131,7 @@ Alternatively you may look here for a formatted list: (though it may not be upda
 | [Raw](#raw)                                     | `raw`                            | No    | No     | No        | None          | Raw       |
 | [Ruby](#ruby)                                   | `ruby`                           | No    | No     | Yes       | Map           | Elements  |
 | [Ruby text](#ruby-text)                         | `rt`, `rubytext`                 | No    | No     | Yes       | Map           | Elements  |
-| [Ruby (short)](#ruby-short)                     | `rb`, `ruby2`                    | No    | No     | Yes       | Value         | None      |
+| [Ruby (short)](#ruby-short)                     | `rb`, `ruby2`                    | No    | No     | No        | Value         | None      |
 | [Size](#size)                                   | `size`                           | No    | No     | No        | Value         | Elements  |
 | [Span](#span)                                   | `span`                           | No    | Yes    | No        | Map           | Elements  |
 | [Strikethrough](#strikethrough)                 | `s`, `strikethrough`             | No    | No     | No        | Map           | Elements  |
@@ -452,6 +453,29 @@ Arguments:
 * `hide` &mdash; (Boolean) Whether to hide the footnote block, effectively not rendering it.
 * `title` &mdash; (String) An alternate title to the footnote block. In English, the default is `Footnotes`.
 
+### Form
+
+Output: `Element::Form` / `<span class="wj-raw">`
+
+Body: Raw
+
+Arguments:
+* None
+
+A matched form block is represented as literal source lines rather than interactive form fields.
+
+Example:
+
+```
+[[form]]
+fields:
+  name:
+    type: text
+---
+name: Alice
+[[/form]]
+```
+
 ### Hidden
 
 Output: `Element::Container(ContainerType::Hidden)` / `<span class="wj-hidden">`
@@ -482,7 +506,7 @@ Body: Raw
 Accepts newline separation.
 
 Arguments:
-* None
+* All accepted attributes
 
 Example:
 

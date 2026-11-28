@@ -535,7 +535,11 @@ fn wikidot_footnote_enclosing_opener_on_prior_line(
     opener_byte: usize,
     footnote_head: usize,
 ) -> bool {
-    let line_start = source[..=opener_byte.min(source.len().saturating_sub(1))]
+    // opener_byte is the first byte of an opener token, so it never points
+    // at a newline byte and never lies past the end of source; slicing to
+    // ..opener_byte therefore finds the same line start as an inclusive
+    // slice would.
+    let line_start = source[..opener_byte]
         .rfind('\n')
         .map_or(0, |index| index + 1);
     let line_end = source[opener_byte..]

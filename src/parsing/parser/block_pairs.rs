@@ -913,6 +913,45 @@ impl<'t> Scanner<'t> {
                 }
             }
         }
+        for (index, token) in tokens.iter().enumerate() {
+            let Some(&(balance_before, _, own_line_closers, ends_after_document)) =
+                div_marks.get(&token.span.start)
+            else {
+                continue;
+            };
+            if balance_before != 0
+                || own_line_closers == 0
+                || ends_after_document.saturating_sub(own_line_closers) <= balance_before
+                || !scanner.line_prefix_clean(index)
+            {
+                continue;
+            }
+            let Some(head) = scanner.read_kind_head(index, WikidotBlockKind::Div) else {
+                continue;
+            };
+            if head.flag_score || !head.has_args {
+                continue;
+            }
+            let line_end = source[token.span.start..]
+                .find('\n')
+                .map_or(source.len(), |offset| token.span.start + offset);
+            let mut activated = false;
+            for (closer, closer_token) in tokens.iter().enumerate().skip(index + 1) {
+                if closer_token.span.start >= line_end {
+                    break;
+                }
+                if scanner
+                    .read_kind_closer(closer, WikidotBlockKind::Div)
+                    .is_some()
+                {
+                    scanner.vanishing_div_closers.insert(closer);
+                    activated = true;
+                }
+            }
+            if activated {
+                scanner.surplus_div_heads.insert(index);
+            }
+        }
         scanner
     }
 

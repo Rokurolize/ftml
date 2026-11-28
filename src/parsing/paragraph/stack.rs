@@ -26,6 +26,11 @@ use crate::tree::{
 use std::borrow::Cow;
 use std::mem;
 
+fn wikidot_literal_div_line_text(text: &str) -> bool {
+    let lower = text.to_ascii_lowercase();
+    lower.contains("[[div") && lower.contains("[[/div]]")
+}
+
 pub(crate) fn collapsible_has_direct_literal_nested_opener(
     element: &Element<'_>,
 ) -> bool {
@@ -1550,16 +1555,42 @@ impl<'t> ParagraphStack<'t> {
             }
         if self.wikidot_reopen_for_footnote && matches!(element, Element::Footnote(_)) {
             self.wikidot_reopen_for_footnote = false;
-            let Some(Element::Container(paragraph)) = self.finished.pop() else {
-                unreachable!("footnote reopening requires a preceding paragraph");
+            if !self.current.is_empty() {
+                self.current.append(&mut self.pending_suppression_seams);
+                self.current.push(element);
+                return;
+            }
+            let reopened = match self.finished.pop() {
+                Some(Element::Container(paragraph))
+                    if paragraph.ctype() == ContainerType::Paragraph =>
+                {
+                    self.current = paragraph.into();
+                    true
+                }
+                Some(Element::Text(text)) if wikidot_literal_div_line_text(&text) => {
+                    self.current_unwrapped = false;
+                    self.current.push(Element::Text(
+                        text.trim_start_matches('\n').to_owned().into(),
+                    ));
+                    true
+                }
+                Some(other) => {
+                    self.finished.push(other);
+                    false
+                }
+                None => false,
             };
-            debug_assert_eq!(paragraph.ctype(), ContainerType::Paragraph);
-            self.current = paragraph.into();
-            self.current.append(&mut self.pending_suppression_seams);
-            self.current.push(element);
-            return;
+            if reopened {
+                self.current.append(&mut self.pending_suppression_seams);
+                self.current.push(element);
+                return;
+            }
         }
-        self.wikidot_reopen_for_footnote = false;
+        if !paragraph_break_separated
+            || !matches!(&element, Element::Text(text) if wikidot_literal_div_line_text(text))
+        {
+            self.wikidot_reopen_for_footnote = false;
+        }
 
         if element != Element::LineBreak {
             if paragraph_safe || !self.current.is_empty() {
@@ -1747,7 +1778,11 @@ impl<'t> ParagraphStack<'t> {
         }
 
         if wikidot_html_block {
-            self.end_paragraph();
+            if !(paragraph_safe
+                && matches!(self.current.last(), Some(Element::Footnote(_))))
+            {
+                self.end_paragraph();
+            }
             if !self.wikidot_current_has_run_content() {
                 self.wikidot_absorb_post_list_break_for_prose(!paragraph_break_separated);
             }

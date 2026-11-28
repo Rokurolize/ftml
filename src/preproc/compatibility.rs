@@ -2861,9 +2861,24 @@ fn preserve_wikidot_div_label_close_link_boundary(text: &mut String) {
                 let inner_close_end = inner_start + 3 + inner_close_relative + 2;
                 let after = lower.as_bytes().get(inner_close_end).copied();
                 let label = lower.as_bytes().get(inner_close_end + 1).copied();
+                let follower = lower.get(inner_close_end + 1..).unwrap_or("");
+                let bare_non_owner = follower.starts_with("[[")
+                    && follower
+                        .as_bytes()
+                        .get(2)
+                        .is_some_and(u8::is_ascii_alphanumeric)
+                    && !matches!(
+                        follower[2..]
+                            .split("]]")
+                            .next()
+                            .unwrap_or("")
+                            .trim_end_matches('_'),
+                        "div" | "span" | "footnote"
+                    );
                 if matches!(after, Some(b' ' | b'\t'))
                     && label
                         .is_some_and(|byte| !byte.is_ascii_whitespace() && byte != b']')
+                    && !bare_non_owner
                     && lower[inner_close_end..line_end].contains("]]")
                     && !literal_ranges
                         .iter()

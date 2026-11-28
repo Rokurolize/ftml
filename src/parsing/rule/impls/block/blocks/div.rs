@@ -679,22 +679,17 @@ where
                 elide_comments_from_literal(&source[from..literal_end]),
             )));
         } else {
-            if parser.current().span.start == closer_start {
-                let leaves_end_block_link = source[owner_end..].starts_with("[[")
-                    && source[owner_end + 2..].find("]]").is_some_and(|relative| {
-                        source[owner_end + 2..owner_end + 2 + relative]
-                            .contains([' ', '\t'])
-                    });
-                if !leaves_end_block_link {
-                    while parser.current().span.start < owner_end {
-                        if parser.step().is_err() {
-                            break;
-                        }
+            if parser.current().span.start == closer_start
+                && !wikidot_div_close_leaves_end_block_link(source, owner_end)
+            {
+                while parser.current().span.start < owner_end {
+                    if parser.step().is_err() {
+                        break;
                     }
-                    elements.push(Element::Text(discard_wikidot_controls(
-                        elide_comments_from_literal(&source[closer_start..owner_end]),
-                    )));
                 }
+                elements.push(Element::Text(discard_wikidot_controls(
+                    elide_comments_from_literal(&source[closer_start..owner_end]),
+                )));
             }
             // L85 scope-5: in item bodies the newline after a literal div
             // is left for the real break token (e25/e18/e32 trail it bare);
@@ -945,6 +940,32 @@ fn wikidot_div_try_hoist_trailing_literal_close_lists<'t>(
         hoisted.insert(0, list);
     }
     (!hoisted.is_empty()).then_some(hoisted)
+}
+
+fn wikidot_div_close_leaves_end_block_link(source: &str, owner_end: usize) -> bool {
+    let bytes = source.as_bytes();
+    let mut head = owner_end;
+    let spaced = !source[head..].starts_with("[[");
+    if spaced {
+        while matches!(bytes.get(head), Some(b' ' | b'\t')) {
+            head += 1;
+        }
+    }
+    if !source[head..].starts_with("[[") {
+        return false;
+    }
+    let Some(relative) = source[head + 2..].find("]]") else {
+        return false;
+    };
+    let name = &source[head + 2..head + 2 + relative];
+    if !spaced {
+        return name.contains([' ', '\t']);
+    }
+    bytes.get(head + 2).is_some_and(u8::is_ascii_alphanumeric)
+        && !matches!(
+            name.trim_end_matches('_').to_ascii_lowercase().as_str(),
+            "div" | "span" | "footnote"
+        )
 }
 
 fn strip_yielded_div_break(elements: &mut [Element<'_>]) {

@@ -431,7 +431,10 @@ where
     }
 
     let mut attempt = parser.clone();
-    let closes = [ParseCondition::current(Token::RightBracket)];
+    let closes = [
+        ParseCondition::current(Token::RightBracket),
+        ParseCondition::current(Token::RightBlock),
+    ];
     let invalids = [
         ParseCondition::current(Token::Whitespace),
         ParseCondition::current(Token::LineBreak),
@@ -439,7 +442,7 @@ where
     ];
     let (field, last) =
         collect_comment_elided_keep(&mut attempt, &closes, &invalids, None, None).ok()?;
-    if last.token != Token::RightBracket {
+    if !matches!(last.token, Token::RightBracket | Token::RightBlock) {
         return None;
     }
 
@@ -457,12 +460,17 @@ where
     let expanded = attempt.settings().interwiki.build(&url)?;
     let label = wikidot_interwiki_path_label(&url);
     parser.update(&attempt);
-    Some(Elements::Single(Element::Link {
+    let link = Element::Link {
         ltype: LinkType::Interwiki,
         link: LinkLocation::Url(Cow::Owned(expanded)),
         label: LinkLabel::Text(label),
         target: None,
-    }))
+    };
+    if last.token == Token::RightBlock {
+        Some(Elements::Multiple(vec![link, text!("]")]))
+    } else {
+        Some(Elements::Single(link))
+    }
 }
 
 pub fn try_consume_wikidot_end_block_link<'r, 't>(

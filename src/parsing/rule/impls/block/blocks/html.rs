@@ -47,10 +47,20 @@ fn parse_fn<'r, 't>(
     assert!(!flag_score, "HTML doesn't allow score flag");
     assert_block_name(&BLOCK_HTML, name);
 
+    let mut after_footnote_close = false;
     if parser.settings().layout.legacy() && !parser.discarding_hidden_body() {
         let source = parser.full_text().inner();
         if opener_start > 0 && !source[..opener_start].ends_with('\n') {
-            return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            let before = source[..opener_start].trim_end_matches([' ', '\t']);
+            after_footnote_close = before.rfind("[[").is_some_and(|open| {
+                let token = &before[open..];
+                token.len() >= "[[/footnote]]".len()
+                    && token.starts_with("[[/footnote")
+                    && token.ends_with("]]")
+            });
+            if !after_footnote_close {
+                return Err(parser.make_err(ParseErrorKind::RuleFailed));
+            }
         }
     }
 
@@ -134,13 +144,17 @@ fn parse_fn<'r, 't>(
     if parser.settings().layout.legacy()
         && element_contents_empty(&element)
         && opener_start > 0
-        && parser.full_text().inner()[..opener_start].ends_with('\n')
     {
-        return success_elements_with_paragraph_safety(
-            true,
-            vec![Element::LineBreak, element],
-            Vec::new(),
-        );
+        if parser.full_text().inner()[..opener_start].ends_with('\n') {
+            return success_elements_with_paragraph_safety(
+                true,
+                vec![Element::LineBreak, element],
+                Vec::new(),
+            );
+        }
+        if after_footnote_close {
+            return success_elements_with_paragraph_safety(true, element, Vec::new());
+        }
     }
     ok!(parser.settings().layout.legacy(); element)
 }

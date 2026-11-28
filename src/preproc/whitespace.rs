@@ -547,14 +547,32 @@ fn wikidot_space_before_footnote_in_link_label(text: &str, space_start: usize) -
 
 fn wikidot_line_end_required_closer(text: &str) -> bool {
     let trimmed = text.trim_end_matches([' ', '\t', '\r', '\n']);
-    let Some(close_start) = trimmed.rfind("[[/") else {
+    let mut end = trimmed.len();
+    while let Some(comment) = trimmed[..end].rfind("[!--") {
+        if !trimmed[comment..end].ends_with("--]") {
+            break;
+        }
+        let line_start = trimmed[..comment].rfind('\n').map_or(0, |index| index + 1);
+        if !trimmed[line_start..comment]
+            .bytes()
+            .all(|byte| matches!(byte, b' ' | b'\t'))
+        {
+            break;
+        }
+        end = trimmed[..comment]
+            .trim_end_matches([' ', '\t', '\r', '\n'])
+            .len();
+    }
+    let Some(close_start) = trimmed[..end].rfind("[[/") else {
         return false;
     };
-    let Some(name) = trimmed[close_start + 3..].strip_suffix("]]") else {
+    let Some(name) = trimmed[close_start + 3..end].strip_suffix("]]") else {
         return false;
     };
     let name = name.split_ascii_whitespace().next().unwrap_or_default();
-    name.eq_ignore_ascii_case("code") || name.eq_ignore_ascii_case("math")
+    name.eq_ignore_ascii_case("code")
+        || name.eq_ignore_ascii_case("math")
+        || name.eq_ignore_ascii_case("html")
 }
 
 pub(super) fn preserve_wikidot_terminal_backslash_run(text: &mut String) {

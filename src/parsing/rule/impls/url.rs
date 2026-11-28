@@ -63,14 +63,17 @@ pub(crate) fn starts_wikidot_only_scheme_url(source: &str, start: usize) -> bool
             return false;
         }
         let host = start + scheme.len();
-        let scan_from = host
-            + usize::from(
-                source[host..]
-                    .chars()
-                    .next()
-                    .is_some_and(is_discarded_control),
-            );
-        wikidot_automatic_url_end(source, scan_from, source.len(), false) > scan_from
+        if source[host..]
+            .chars()
+            .next()
+            .is_some_and(is_discarded_control)
+        {
+            let scan_from = host + 1;
+            return wikidot_automatic_url_end(source, scan_from, source.len(), false)
+                > scan_from;
+        }
+        crate::parsing::token::scan_url_body_with_leading_host(source.as_bytes(), host)
+            .is_some()
     })
 }
 

@@ -20,6 +20,8 @@
 
 mod scanner;
 
+pub(crate) use self::scanner::scan_url_body_with_leading_host;
+
 #[cfg(test)]
 mod lexer {
     // Since pest generates some code that clippy doesn't like

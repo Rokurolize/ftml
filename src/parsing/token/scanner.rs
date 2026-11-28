@@ -439,6 +439,13 @@ fn scan_url(bytes: &[u8], start: usize) -> Option<usize> {
         return None;
     };
 
+    scan_url_body_with_leading_host(bytes, body_start)
+}
+
+pub(crate) fn scan_url_body_with_leading_host(
+    bytes: &[u8],
+    body_start: usize,
+) -> Option<usize> {
     let Some(first) = char_at(bytes, body_start) else {
         return scan_url_body(bytes, body_start);
     };

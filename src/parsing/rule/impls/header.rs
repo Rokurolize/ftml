@@ -132,7 +132,28 @@ fn consume_header_once<'r, 't>(
     };
     let crossed_close_on_line = parser.settings().layout.legacy()
         && wikidot_crossed_heading_close_on_line(parser);
-    let collected = collect_wikidot_heading_with_barriers(parser, ctype, heading, &close);
+    let collected = if parser.settings().layout.legacy()
+        && parser.in_native_blockquote_line()
+        && parser.current().token == Token::Other
+        && parser.current().slice == "`"
+        && crate::parsing::rule::impls::backtick_starts_rawold(parser)
+    {
+        let output = crate::parsing::rule::impls::RULE_RAWOLD.try_consume(parser)?;
+        let (item, errors, _) = output.into();
+        let body = match item {
+            Elements::Single(element) => vec![element],
+            Elements::Multiple(elements) => elements,
+            Elements::None => Vec::new(),
+        };
+        let heading = Elements::Single(Element::Container(Container::new(
+            ctype,
+            body,
+            AttributeMap::new(),
+        )));
+        Ok(ParseSuccess::new((heading, None), errors, false))
+    } else {
+        collect_wikidot_heading_with_barriers(parser, ctype, heading, &close)
+    };
     if let Some((single_line, heading_line)) = restore_line {
         parser.set_in_wikidot_single_line_content(single_line);
         parser.set_in_wikidot_heading_line(heading_line);

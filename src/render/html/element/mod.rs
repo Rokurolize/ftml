@@ -320,7 +320,7 @@ pub fn render_element(ctx: &mut HtmlContext, element: &Element) {
     match element {
         Element::Container(container) => render_container(ctx, container),
         Element::Module(module) => render_module(ctx, module),
-        Element::Text(text) => ctx.push_escaped_text(text),
+        Element::Text(text) | Element::LiteralText(text) => ctx.push_escaped_text(text),
         Element::Raw(text) => render_wikitext_raw(ctx, text),
         Element::Form(text) => render_form_line(ctx, text),
         Element::Variable(name) => render_variable(ctx, name),

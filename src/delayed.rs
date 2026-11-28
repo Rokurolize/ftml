@@ -949,6 +949,7 @@ pub(crate) fn elements_contain_delayed(elements: &[Element<'_>]) -> bool {
 fn element_contains_delayed(element: &Element<'_>) -> bool {
     match element {
         Element::Delayed(_) => true,
+        Element::LiteralText(_) => false,
         Element::Container(container) => elements_contain_delayed(container.elements()),
         Element::Table(table) => table.rows.iter().any(|row| {
             row.cells

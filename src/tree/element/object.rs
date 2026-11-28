@@ -92,6 +92,9 @@ pub enum Element<'t> {
 
     Text(Cow<'t, str>),
 
+    /// Code-span body text, opaque to inline-format repair passes.
+    LiteralText(Cow<'t, str>),
+
     /// Raw text.
     ///
     /// This should be formatted exactly as listed.
@@ -457,7 +460,7 @@ impl Element<'_> {
         match self {
             Element::Container(container) => container.ctype().name(),
             Element::Module(module) => module.name(),
-            Element::Text(_) => "Text",
+            Element::Text(_) | Element::LiteralText(_) => "Text",
             Element::Raw(_) => "Raw",
             Element::Form(_) => "Form",
             Element::Variable(_) => "Variable",
@@ -615,6 +618,7 @@ impl Element<'_> {
             Element::Container(container) => container.ctype().paragraph_safe(),
             Element::Module(_) => false,
             Element::Text(_)
+            | Element::LiteralText(_)
             | Element::Raw(_)
             | Element::Form(_)
             | Element::Variable(_)
@@ -686,6 +690,7 @@ impl Element<'_> {
             Element::Container(container) => Element::Container(container.to_owned()),
             Element::Module(module) => Element::Module(module.to_owned()),
             Element::Text(text) => Element::Text(string_to_owned(text)),
+            Element::LiteralText(text) => Element::LiteralText(string_to_owned(text)),
             Element::Raw(text) => Element::Raw(string_to_owned(text)),
             Element::Form(text) => Element::Form(string_to_owned(text)),
             Element::Variable(name) => Element::Variable(string_to_owned(name)),

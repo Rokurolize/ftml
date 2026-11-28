@@ -102,6 +102,13 @@ fn parse_fn<'r, 't>(
             .find("]]")
             .expect("parsed bibliography opener has closing brackets")
         + "]]".len();
+    if wikidot_candidate
+        && find_bibliography_closer(source, opener_end).is_some_and(|closer| {
+            crate::parsing::rule::impls::wikidot_code_token_contains(source, closer)
+        })
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
 
     if wikidot_candidate && wikidot_crossed_footnote_close(source, opener_end) {
         let title = arguments.get("title");

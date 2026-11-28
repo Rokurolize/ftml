@@ -1860,6 +1860,7 @@ fn join_continued_lines(
     let raw_body_ranges = if wikidot_compatibility {
         let mut ranges = wikidot_math_body_ranges(text);
         ranges.extend(crate::wikidot_code::active_body_ranges(text));
+        ranges.extend(wikidot_rawold_body_ranges(text));
         ranges.sort_by_key(|range| range.start);
         ranges
     } else {

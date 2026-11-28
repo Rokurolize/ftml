@@ -35,6 +35,30 @@ pub const BLOCK_ANCHOR: BlockRule = BlockRule {
     parse_fn,
 };
 
+fn anchor_closers_eaten_by_code_token(source: &str, from: usize) -> bool {
+    let mut saw_closer = false;
+    let mut pos = from.min(source.len());
+    while let Some(rel) = source.get(pos..).and_then(|suffix| suffix.find("[[/")) {
+        let start = pos + rel;
+        let Some(rest) = source.get(start + 3..) else {
+            break;
+        };
+        let Some(close_rel) = rest.find("]]") else {
+            break;
+        };
+        let name = rest[..close_rel].trim();
+        let end = start + 3 + close_rel + 2;
+        if name.eq_ignore_ascii_case("a") || name.eq_ignore_ascii_case("anchor") {
+            saw_closer = true;
+            if !crate::parsing::rule::impls::wikidot_code_token_contains(source, start) {
+                return false;
+            }
+        }
+        pos = end;
+    }
+    saw_closer
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &str,
@@ -81,6 +105,12 @@ fn parse_fn<'r, 't>(
     // leaves the opener literal instead of dropping the open tag.
     if parser.settings().layout.legacy()
         && parser.wikidot_greedy_tail_eats_closers(opener_start, &["a", "anchor"])
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
+    if parser.settings().layout.legacy()
+        && (name.eq_ignore_ascii_case("a") || name.eq_ignore_ascii_case("anchor"))
+        && anchor_closers_eaten_by_code_token(parser.full_text().inner(), opener_start)
     {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     }

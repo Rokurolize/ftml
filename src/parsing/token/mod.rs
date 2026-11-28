@@ -20,7 +20,9 @@
 
 mod scanner;
 
-pub(crate) use self::scanner::scan_url_body_with_leading_host;
+pub(crate) use self::scanner::{
+    is_url_terminal_backslash, scan_url_body_with_leading_host,
+};
 
 #[cfg(test)]
 mod lexer {

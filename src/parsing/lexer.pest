@@ -155,7 +155,7 @@ url_format_pair = _{ "**" ~ (!("--" | "..." | "**") ~ ANY)* ~ ("--" | "...") ~ (
 url = @{
     (((("http" ~ "s"?) | "ftp") ~ "://") | "mailto:") ~
     leading_host_char? ~
-    (!(NEWLINE | " " | "\t" | "\"" | "'" | "|" | "[" | "]" | ">@" | "@@" | url_format_pair | ("@" ~ "<" ~ (!(">" ~ "@") ~ !NEWLINE ~ ANY)* ~ ">" ~ "@") | discarded_control | WHITE_SPACE | "\u{001b}" | "\u{007f}") ~ ANY)+
+    (!(NEWLINE | " " | "\t" | "\"" | "'" | "|" | "[" | "]" | ">@" | "@@" | url_format_pair | ("@" ~ "<" ~ (!(">" ~ "@") ~ !NEWLINE ~ ANY)* ~ ">" ~ "@") | discarded_control | WHITE_SPACE | "\u{001b}" | "\u{007f}" | ("\\" ~ EOI)) ~ ANY)+
 }
 
 url_star = @{ "*" ~ url }

@@ -180,6 +180,16 @@ pub(crate) fn normalize_wikidot_inline_formats(elements: &mut Vec<Element<'_>>) 
     normalize_sequence(elements);
 }
 
+pub(crate) fn lower_wikidot_code_span_text(elements: &mut Vec<Element<'_>>) {
+    for element in elements.iter_mut() {
+        if let Element::LiteralText(text) = element {
+            let value = mem::take(text);
+            *element = Element::Text(value);
+        }
+        visit_children_mut(element, lower_wikidot_code_span_text);
+    }
+}
+
 fn normalize_sequence<'t>(elements: &mut Vec<Element<'t>>) {
     normalize_sequence_scoped(elements, false);
 }

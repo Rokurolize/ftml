@@ -20,8 +20,9 @@
 
 use super::inline_delimiter::{
     ReachableCloseMode, append_wikidot_line_close_space, assert_unpadded_open,
-    inline_body_padded_through_seams, legacy_format_body_code_preceded_by_content,
-    legacy_format_body_contains_table, validate_reachable_close,
+    block_name_at, inline_body_padded_through_seams,
+    legacy_format_body_code_preceded_by_content, legacy_format_body_contains_table,
+    validate_reachable_close,
 };
 use super::prelude::*;
 
@@ -58,6 +59,29 @@ fn tilde<'r, 't>(parser: &mut Parser<'r, 't>) -> ParseResult<'r, 't, Elements<'t
     try_consume_strikethrough(parser, RULE_STRIKETHROUGH_TILDE, Token::DoubleTilde)
 }
 
+fn double_dash_crosses_block(parser: &Parser<'_, '_>) -> bool {
+    let tokens = parser.remaining();
+    let mut seen_content = false;
+    for (index, current) in tokens.iter().enumerate() {
+        if current.token == Token::DoubleDash {
+            return false;
+        }
+        if matches!(current.token, Token::LeftBlock | Token::LeftBlockEnd)
+            && matches!(
+                block_name_at(tokens, index).to_ascii_lowercase().as_str(),
+                "div" | "math"
+            )
+        {
+            return seen_content;
+        }
+        if current.token == Token::InputEnd {
+            return false;
+        }
+        seen_content = true;
+    }
+    false
+}
+
 fn try_consume_strikethrough<'r, 't>(
     parser: &mut Parser<'r, 't>,
     rule: Rule,
@@ -80,6 +104,12 @@ fn try_consume_strikethrough<'r, 't>(
         return success_elements(text!("----"));
     }
     let in_anchor_body = parser.in_wikidot_anchor_body();
+    if token == Token::DoubleDash
+        && parser.settings().layout.legacy()
+        && double_dash_crosses_block(parser)
+    {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     validate_reachable_close(parser, token, None, ReachableCloseMode::Standard, None)?;
     if token == Token::DoubleDash {
         assert_unpadded_open(parser, token)?;

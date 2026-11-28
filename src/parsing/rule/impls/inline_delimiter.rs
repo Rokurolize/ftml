@@ -557,7 +557,18 @@ pub(super) fn validate_reachable_close(
     let mut saw_block_pairing = false;
     let mut last_paragraph_break = None;
     let mut index = 0;
+    let source = parser.full_text().inner();
     while index < tokens.len() {
+        if tokens[index].token == Token::Other
+            && tokens[index].slice == "`"
+            && let Some(end) =
+                super::wikidot_code_token_end(source, tokens[index].span.start)
+        {
+            while index < tokens.len() && tokens[index].span.start < end {
+                index += 1;
+            }
+            continue;
+        }
         count_scan_token_visit();
         if let Some(delimiter) = split
             && delimiter.is_half(&tokens[index])

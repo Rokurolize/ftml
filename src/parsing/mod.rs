@@ -371,6 +371,15 @@ where
                     }
                 }
                 footnote::drop_wikidot_quote_tail_footnote_refs(&mut elements);
+                inline_format::lower_wikidot_code_span_text(&mut elements);
+                for footnote in &mut footnotes {
+                    inline_format::lower_wikidot_code_span_text(footnote);
+                }
+                for bibliography in bibliographies.slice_mut() {
+                    for (_, items) in bibliography.slice_mut() {
+                        inline_format::lower_wikidot_code_span_text(items);
+                    }
+                }
             }
             debug!(
                 "Finished parsing into syntax tree ({} errors)",

@@ -27,7 +27,7 @@ pub const RULE_RAWOLD: Rule = Rule {
     try_consume_fn,
 };
 
-fn wikidot_code_token_body_end(source: &str, start: usize) -> Option<usize> {
+pub(crate) fn wikidot_code_token_body_end(source: &str, start: usize) -> Option<usize> {
     let bytes = source.as_bytes();
     if start > 0 && bytes.get(start - 1) == Some(&b'`') {
         return None;
@@ -58,6 +58,19 @@ pub(crate) fn wikidot_code_token_at(source: &str, start: usize) -> bool {
     wikidot_code_token_body_end(source, start).is_some()
 }
 
+pub(crate) fn wikidot_code_token_end(source: &str, start: usize) -> Option<usize> {
+    wikidot_code_token_body_end(source, start).map(|body_end| body_end + 2)
+}
+
+pub(crate) fn wikidot_code_token_contains(source: &str, position: usize) -> bool {
+    let bytes = source.as_bytes();
+    (0..source.len().min(position)).any(|start| {
+        bytes[start] == b'`'
+            && wikidot_code_token_body_end(source, start)
+                .is_some_and(|body_end| position < body_end + 2)
+    })
+}
+
 pub(crate) fn contains_wikidot_code_token(value: &str) -> bool {
     let bytes = value.as_bytes();
     (0..bytes.len())
@@ -86,13 +99,33 @@ fn try_consume_fn<'r, 't>(
     let body = &source[body_start..body_end];
     let end = body_end + 2;
     while parser.current().span.start < end {
-        if matches!(
-            parser.current().token,
-            Token::InputEnd | Token::Raw | Token::LeftRaw | Token::RightRaw
-        ) {
+        if parser.current().token == Token::InputEnd {
             return Err(parser.make_err(ParseErrorKind::RuleFailed));
         }
         parser.step()?;
     }
-    ok!(Element::Text(Cow::Owned(body.to_owned())))
+    let escapes = crate::wikidot_raw_escape::raw_escapes(body);
+    let opaque_body = matches!(body, "**" | "//" | "__" | "^^" | ",," | "{{")
+        || (!body.is_empty() && body.bytes().all(|byte| byte == b'-'));
+    if escapes.is_empty() {
+        let text = Cow::Owned(body.to_owned());
+        return ok!(if opaque_body {
+            Element::LiteralText(text)
+        } else {
+            Element::Text(text)
+        });
+    }
+    let mut literal = String::with_capacity(body.len());
+    let mut cursor = 0;
+    for escape in escapes {
+        literal.push_str(&body[cursor..escape.start]);
+        cursor = escape.end;
+    }
+    literal.push_str(&body[cursor..]);
+    let text = Cow::Owned(literal);
+    ok!(if opaque_body {
+        Element::LiteralText(text)
+    } else {
+        Element::Text(text)
+    })
 }

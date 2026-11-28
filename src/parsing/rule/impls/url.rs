@@ -224,6 +224,19 @@ where
     let starred = parser.current().token == Token::UrlStar;
     let url_start = start + usize::from(starred);
     let end = parser.current().span.end;
+    let slice = &source[url_start..end];
+    if let Some(code_start) = slice.bytes().enumerate().find_map(|(offset, byte)| {
+        (byte == b'`' && super::rawold::wikidot_code_token_at(slice, offset))
+            .then_some(offset)
+    }) {
+        let body_end = super::rawold::wikidot_code_token_body_end(slice, code_start)
+            .expect("code token gate found a closing pair");
+        let mut literal = String::with_capacity(end - start);
+        literal.push_str(&source[start..url_start + code_start]);
+        literal.push_str(&slice[code_start + 2..body_end]);
+        parser.step()?;
+        return Ok(Elements::Single(Element::Text(Cow::Owned(literal))));
+    }
     let comments = Vec::new();
     parser.step()?;
 

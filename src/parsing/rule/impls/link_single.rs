@@ -21,7 +21,7 @@
 use super::RULE_COMMENT;
 use super::math::wikidot_math_candidate_is_complete;
 use super::prelude::*;
-use super::rawold::backtick_starts_rawold;
+use super::rawold::{backtick_starts_rawold, contains_wikidot_code_token};
 use crate::delayed::{DelayedElement, GeneratedKind};
 use crate::parsing::collect::{
     collect_comment_elided_keep, collect_comment_elided_keep_from,
@@ -1594,6 +1594,12 @@ where
             | Token::LineBreak
             | Token::ParagraphBreak
             | Token::InputEnd => return Ok(false),
+
+            Token::Url | Token::UrlStar
+                if contains_wikidot_code_token(probe.current().slice) =>
+            {
+                return Ok(true);
+            }
 
             Token::LeftBlock if iftags_segment_fused(&probe).is_some() => {
                 consume_iftags_segment_fused(&mut probe)?;

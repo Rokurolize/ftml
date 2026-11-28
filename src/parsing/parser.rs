@@ -185,7 +185,7 @@ pub(super) struct BlockScanCache<'t> {
     raw_escapes_cache: Option<Vec<crate::wikidot_raw_escape::RawEscape>>,
     wikidot_collapsible_outer_div_memo: BTreeMap<(usize, usize), (bool, bool)>,
     wikidot_div_bounded_span: BTreeMap<usize, bool>,
-    wikidot_div_stream_marks: BTreeMap<usize, (u32, u32, u32, u32)>,
+    wikidot_div_stream_marks: BTreeMap<usize, (u32, u32, u32, u32, u32)>,
     wikidot_block_pairs: block_pairs::WikidotBlockPairs,
     wikidot_line_runs: block_pairs::WikidotLineRuns,
     full_text_lowered: Option<Rc<str>>,

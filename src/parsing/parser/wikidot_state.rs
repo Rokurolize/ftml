@@ -261,7 +261,7 @@ impl Parser<'_, '_> {
             .borrow()
             .wikidot_div_stream_marks
             .get(&opener_start)
-            .is_some_and(|&(balance_before, ends_after, _, _)| {
+            .is_some_and(|&(balance_before, ends_after, _, _, _)| {
                 ends_after <= balance_before
             })
     }
@@ -276,7 +276,7 @@ impl Parser<'_, '_> {
             .wikidot_div_stream_marks
             .get(&opener_start)
             .is_some_and(
-                |&(balance_before, _, own_line_closers, ends_after_document)| {
+                |&(balance_before, _, own_line_closers, ends_after_document, _)| {
                     ends_after_document.saturating_sub(own_line_closers) <= balance_before
                 },
             )
@@ -291,11 +291,9 @@ impl Parser<'_, '_> {
             .borrow()
             .wikidot_div_stream_marks
             .get(&opener_start)
-            .is_some_and(
-                |&(balance_before, _, own_line_closers, ends_after_document)| {
-                    ends_after_document.saturating_sub(own_line_closers) > balance_before
-                },
-            )
+            .is_some_and(|&(balance_before, _, _, _, line_initial_closers_after)| {
+                line_initial_closers_after > balance_before
+            })
     }
 
     #[inline]
@@ -1191,7 +1189,7 @@ fn div_stream_resolved_name<'a>(
 pub(super) fn compute_wikidot_div_stream_marks(
     tokens: &[ExtractedToken<'_>],
     source: &str,
-) -> BTreeMap<usize, (u32, u32, u32, u32)> {
+) -> BTreeMap<usize, (u32, u32, u32, u32, u32)> {
     fn block_name<'a>(tokens: &[ExtractedToken<'a>], index: usize) -> Option<&'a str> {
         tokens
             .get(index + 1)
@@ -1367,6 +1365,16 @@ pub(super) fn compute_wikidot_div_stream_marks(
             .or_default()
             .push(closer);
     }
+    let line_initial_closers: Vec<usize> = all_closers
+        .iter()
+        .copied()
+        .filter(|&closer| {
+            let line_start = line_start_of(closer);
+            source[line_start..closer]
+                .bytes()
+                .all(|byte| matches!(byte, b' ' | b'\t' | b'\r' | b'>'))
+        })
+        .collect();
     let mut marks = BTreeMap::new();
     for (span, balance_before, ends_after) in resolved {
         let own_line_closers = closers_by_line
@@ -1374,10 +1382,9 @@ pub(super) fn compute_wikidot_div_stream_marks(
             .map_or(0, |closers| {
                 closers.iter().filter(|&&closer| closer > span).count() as u32
             });
-        // The surplus that can activate a single-line head is counted
-        // document-wide: a closer past the point where this head's own
-        // region balances out still counts on live (probe h1, where the
-        // extra closer sits several lines below the geometry).
+        let line_initial_closers_after = (line_initial_closers.len()
+            - line_initial_closers.partition_point(|&closer| closer <= span))
+            as u32;
         let closers_after = all_closers.partition_point(|&closer| closer <= span);
         let ends_after_document = (all_closers.len() - closers_after) as u32;
         marks.insert(
@@ -1387,6 +1394,7 @@ pub(super) fn compute_wikidot_div_stream_marks(
                 ends_after,
                 own_line_closers,
                 ends_after_document,
+                line_initial_closers_after,
             ),
         );
     }

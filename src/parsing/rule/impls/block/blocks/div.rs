@@ -278,6 +278,11 @@ fn wikidot_div_same_line_swallow_end(
         }
         index = close + 2;
     };
+    if find_ascii_case_insensitive(&source[head_close..line_end], "[[footnote]]")
+        .is_some()
+    {
+        return None;
+    }
     let closer = find_ascii_case_insensitive(&source[line_end..], "[[/div]]")? + line_end;
     if !source[line_end..closer]
         .chars()

@@ -1439,7 +1439,7 @@ fn collect_link_ranges(
                     next.token == Token::Url
                         || (next.slice.starts_with('/')
                             && !next.slice.contains(['\'', '"']))
-                }) =>
+                }) || wikidot_colon_target_after(tokens, index) =>
             {
                 single_start = Some(token.span.start);
             }
@@ -1454,6 +1454,32 @@ fn collect_link_ranges(
             _ => {}
         }
     }
+}
+
+fn wikidot_colon_target_after(
+    tokens: &[crate::parsing::ExtractedToken<'_>],
+    opener: usize,
+) -> bool {
+    let mut previous_end = tokens[opener].span.end;
+    for token in &tokens[opener + 1..] {
+        if token.span.start != previous_end {
+            return false;
+        }
+        match token.token {
+            Token::Colon => return true,
+            Token::Whitespace
+            | Token::LineBreak
+            | Token::ParagraphBreak
+            | Token::LeftBracket
+            | Token::LeftBracketStar
+            | Token::RightBracket
+            | Token::RightBlock
+            | Token::InputEnd => return false,
+            _ => {}
+        }
+        previous_end = token.span.end;
+    }
+    false
 }
 
 fn collect_math_ranges(

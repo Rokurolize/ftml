@@ -416,6 +416,24 @@ where
                 break;
             }
         }
+        if parser.current().token == Token::Bold {
+            let mut probe = parser.clone();
+            let mut closes = false;
+            while probe.step().is_ok()
+                && !matches!(
+                    probe.current().token,
+                    Token::LineBreak | Token::ParagraphBreak | Token::InputEnd
+                )
+            {
+                if probe.current().token == Token::Bold {
+                    closes = true;
+                    break;
+                }
+            }
+            if closes {
+                break;
+            }
+        }
 
         let token = parser.current();
         let token_text = &source[token.span.clone()];

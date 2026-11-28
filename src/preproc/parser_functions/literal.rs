@@ -32,6 +32,7 @@ impl LiteralRegionIndex {
         collect_wikidot_literal_blocks(source, &mut ranges);
         ranges.extend(crate::wikidot_code::active_ranges(source));
         collect_same_line_paired_ranges(source, "@@", "@@", &mut ranges);
+        collect_cross_line_at_ranges(source, &mut ranges);
         // Live Wikidot parses @<...>@ with a same-line closer as raw, so
         // preprocessing (typography, comments, whitespace, block scans)
         // must leave its contents alone exactly like @@...@@.
@@ -370,9 +371,14 @@ fn collect_same_line_paired_ranges(
 ) {
     let mut line_offset = 0usize;
     for line in source.split_inclusive('\n') {
+        let bytes = line.as_bytes();
         let mut cursor = 0usize;
         while let Some(relative_start) = line[cursor..].find(opening) {
             let start = cursor + relative_start;
+            if opening == "@<" && start > 0 && bytes[start - 1] == b'@' {
+                cursor = start + opening.len();
+                continue;
+            }
             let body_start = start + opening.len();
             let Some(relative_end) = line[body_start..].find(closing) else {
                 break;
@@ -380,8 +386,43 @@ fn collect_same_line_paired_ranges(
             let end = body_start + relative_end + closing.len();
             ranges.push(line_offset + start..line_offset + end);
             cursor = end;
+            if opening == "@@" && closing == "@@" {
+                while cursor < bytes.len() && bytes[cursor] == b'@' {
+                    cursor += 1;
+                }
+            }
         }
         line_offset += line.len();
+    }
+}
+
+fn collect_cross_line_at_ranges(source: &str, ranges: &mut Vec<Range<usize>>) {
+    let mut offset = 0usize;
+    let mut previous_unclosed = None;
+    for line in source.split_inclusive('\n') {
+        let bytes = line.as_bytes();
+        let mut cursor = 0usize;
+        let mut unclosed = None;
+        while let Some(relative_start) = line[cursor..].find("@@") {
+            let start = cursor + relative_start;
+            let body_start = start + 2;
+            if let Some(relative_end) = line[body_start..].find("@@") {
+                cursor = body_start + relative_end + 2;
+                while cursor < bytes.len() && bytes[cursor] == b'@' {
+                    cursor += 1;
+                }
+            } else {
+                unclosed = Some(offset + start);
+                break;
+            }
+        }
+        if let Some(start) = previous_unclosed.take()
+            && line.starts_with("@@")
+        {
+            ranges.push(start..offset + 2);
+        }
+        previous_unclosed = unclosed;
+        offset += line.len();
     }
 }
 

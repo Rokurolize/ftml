@@ -509,11 +509,14 @@ pub(crate) fn wikidot_footnote_yields_enclosing_closer(
     if opener_byte >= footnote_head {
         return false;
     }
-    if !wikidot_footnote_enclosing_opener_on_prior_line(
-        source,
-        opener_byte,
-        footnote_head,
-    ) {
+    if !bare.eq_ignore_ascii_case("collapsible")
+        && !bare.eq_ignore_ascii_case("span")
+        && !wikidot_footnote_enclosing_opener_on_prior_line(
+            source,
+            opener_byte,
+            footnote_head,
+        )
+    {
         return false;
     }
     if let Some(pair) = parser.wikidot_block_pair_at_closer_byte(closer_byte) {
@@ -535,10 +538,6 @@ fn wikidot_footnote_enclosing_opener_on_prior_line(
     opener_byte: usize,
     footnote_head: usize,
 ) -> bool {
-    // opener_byte is the first byte of an opener token, so it never points
-    // at a newline byte and never lies past the end of source; slicing to
-    // ..opener_byte therefore finds the same line start as an inclusive
-    // slice would.
     let line_start = source[..opener_byte]
         .rfind('\n')
         .map_or(0, |index| index + 1);
@@ -552,6 +551,7 @@ fn wikidot_footnote_enclosing_close_kind(bare: &str) -> bool {
     bare.eq_ignore_ascii_case("div")
         || bare.eq_ignore_ascii_case("collapsible")
         || bare.eq_ignore_ascii_case("note")
+        || bare.eq_ignore_ascii_case("span")
         || bare == "="
 }
 

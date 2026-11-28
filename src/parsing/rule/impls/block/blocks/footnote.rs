@@ -106,9 +106,12 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
         ) && parser.step().is_ok()
         {}
     }
-    if parser.settings().layout.legacy()
-        && wikidot_leave_enclosing_closer_for_parent(parser)?
-    {
+    let yielded_close = if parser.settings().layout.legacy() {
+        wikidot_leave_enclosing_closer_for_parent(parser)?
+    } else {
+        None
+    };
+    if yielded_close.is_some() {
         wikidot_consume_pending_footnote_ref_closer(parser)?;
     }
     let fused_close = parser.wikidot_body_closed_with_fused_close(&BLOCK_FOOTNOTE);
@@ -307,16 +310,57 @@ pub(in crate::parsing::rule::impls::block) fn parse_footnote_ref<'r, 't>(
     if suppress_wikidot_body_reference {
         return ok!(false; Vec::new(), errors);
     }
-    if !control_before_footnote {
-        if fused_close {
-            return ok!(true; vec![Element::Footnote(reference), text!("]")], errors);
+    let yielded_collapsible = yielded_close
+        .as_deref()
+        .is_some_and(|name| name.eq_ignore_ascii_case("collapsible"));
+    let yielded_span = yielded_close
+        .as_deref()
+        .is_some_and(|name| name.eq_ignore_ascii_case("span"));
+    if yielded_close.is_none() {
+        if !control_before_footnote {
+            if fused_close {
+                return ok!(true; vec![Element::Footnote(reference), text!("]")], errors);
+            }
+            return ok!(Element::Footnote(reference), errors);
         }
-        return ok!(Element::Footnote(reference), errors);
+        let mut reference_elements = vec![
+            Element::Delayed(DelayedElement::wikidot_discarded_control_before_footnote()),
+            Element::Footnote(reference),
+        ];
+        if fused_close {
+            reference_elements.push(text!("]"));
+        }
+        return ok!(reference_elements, errors);
     }
-    let mut reference_elements = vec![
-        Element::Delayed(DelayedElement::wikidot_discarded_control_before_footnote()),
-        Element::Footnote(reference),
-    ];
+    let mut reference_elements = Vec::new();
+    if control_before_footnote {
+        reference_elements.push(Element::Delayed(
+            DelayedElement::wikidot_discarded_control_before_footnote(),
+        ));
+    }
+    if yielded_collapsible {
+        reference_elements.push(Element::Container(Container::new(
+            ContainerType::Paragraph,
+            vec![Element::Footnote(reference)],
+            AttributeMap::new(),
+        )));
+        parser.set_footnote_block();
+        reference_elements.push(Element::FootnoteBlock {
+            title: None,
+            hide: false,
+            wikidot_wrappers: Vec::new(),
+            wikidot_inline_suffix: false,
+            wikidot_inline_prefix: false,
+            wikidot_tail_attached: false,
+        });
+    } else {
+        reference_elements.push(Element::Footnote(reference));
+        if yielded_span {
+            reference_elements.push(Element::Partial(PartialElement::InlineSpanClose(
+                cow!("[[/span]]"),
+            )));
+        }
+    }
     if fused_close {
         reference_elements.push(text!("]"));
     }
@@ -636,22 +680,34 @@ fn wikidot_token_space_precedes_footnote(source: &str, opener_start: usize) -> b
 
 fn wikidot_leave_enclosing_closer_for_parent<'r, 't>(
     parser: &mut Parser<'r, 't>,
-) -> Result<bool, ParseError>
+) -> Result<Option<String>, ParseError>
 where
     'r: 't,
 {
     if !parser.wikidot_footnote_at_enclosing_closer() {
-        return Ok(false);
+        return Ok(None);
     }
     let close_start = parser.current().span.start;
     let mut probe = parser.clone();
     let Ok(name) = probe.get_end_block() else {
-        return Ok(false);
+        return Ok(None);
     };
     if !wikidot_footnote_yields_enclosing_closer(parser, close_start, &name) {
-        return Ok(false);
+        return Ok(None);
     }
-    let bare = name.strip_suffix('_').unwrap_or(name.as_ref());
+    let bare = name.strip_suffix('_').unwrap_or(name.as_ref()).to_owned();
+    if bare.eq_ignore_ascii_case("span") {
+        let close_token = format!("[[/{bare}]]");
+        let end_byte = close_start + close_token.len();
+        while parser.current().span.start < end_byte {
+            parser.step()?;
+        }
+        if parser.current().token == Token::LineBreak {
+            parser.step()?;
+        }
+        return Ok(Some(bare));
+    }
+    let borrowed_state = parser.clone();
     let close_token = format!("[[/{bare}]]");
     let end_byte = close_start + close_token.len();
     while parser.current().span.start < end_byte {
@@ -660,7 +716,21 @@ where
     if parser.current().token == Token::LineBreak {
         parser.step()?;
     }
-    Ok(true)
+    if bare.eq_ignore_ascii_case("collapsible") {
+        let footnote_closer = (parser.current().token == Token::LeftBlockEnd)
+            .then(|| {
+                let mut probe = parser.clone();
+                probe
+                    .get_end_block()
+                    .ok()
+                    .is_some_and(|name| name.eq_ignore_ascii_case("footnote"))
+                    .then(|| parser.current().span.start)
+            })
+            .flatten();
+        parser.update(&borrowed_state);
+        parser.set_yielded_footnote_closer(footnote_closer.is_some());
+    }
+    Ok(Some(bare))
 }
 
 fn wikidot_consume_pending_footnote_ref_closer<'r, 't>(

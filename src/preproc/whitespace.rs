@@ -478,7 +478,9 @@ pub(super) fn remove_wikidot_space_before_footnote(text: &mut String) {
         {
             space_start -= 1;
         }
-        if space_start == start {
+        if space_start == start
+            || wikidot_space_before_footnote_in_link_label(text, space_start)
+        {
             continue;
         }
         if wikidot_line_end_required_closer(&text[..space_start]) {
@@ -514,6 +516,33 @@ pub(super) fn remove_wikidot_space_before_footnote(text: &mut String) {
     }
     output.push_str(&text[last_copied..]);
     *text = output;
+}
+
+fn wikidot_space_before_footnote_in_link_label(text: &str, space_start: usize) -> bool {
+    let line_start = text[..space_start]
+        .rfind(['\n', '\r'])
+        .map_or(0, |index| index + 1);
+    let line_end = text[space_start..]
+        .find(['\n', '\r'])
+        .map_or(text.len(), |offset| space_start + offset);
+    if text[space_start..line_end].contains("[[/footnote]]") {
+        return false;
+    }
+    let bytes = text.as_bytes();
+    let mut index = space_start;
+    while index > line_start {
+        index -= 1;
+        match bytes[index] {
+            b']' => return false,
+            b'[' if bytes.get(index.wrapping_sub(1)) != Some(&b'[')
+                && bytes.get(index + 1) != Some(&b'[') =>
+            {
+                return true;
+            }
+            _ => {}
+        }
+    }
+    false
 }
 
 fn wikidot_line_end_required_closer(text: &str) -> bool {

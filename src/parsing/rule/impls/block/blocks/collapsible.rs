@@ -317,6 +317,35 @@ fn wikidot_collapsible_closer_is_bare(source: &str, byte: usize) -> bool {
         .is_some_and(|slice| slice.eq_ignore_ascii_case(CLOSER))
 }
 
+fn wikidot_collapsible_close_crosses_footnote(
+    parser: &Parser<'_, '_>,
+    opener_start: usize,
+) -> bool {
+    let source = parser.full_text().inner();
+    let Some(head_end) = source[opener_start..]
+        .find("]]")
+        .map(|at| opener_start + at + 2)
+    else {
+        return false;
+    };
+    let lowered = source.to_ascii_lowercase();
+    let Some(close_at) = lowered[head_end..]
+        .find("[[/collapsible]]")
+        .map(|at| head_end + at)
+    else {
+        return false;
+    };
+    let after_head = &lowered[head_end..close_at];
+    let after_close = &lowered[close_at + "[[/collapsible]]".len()..];
+    let before = &lowered[..opener_start];
+    if let Some(open_at) = before.rfind("[[footnote") {
+        return before[open_at..].ends_with("]]")
+            && (after_head == "[[/footnote]]"
+                || after_head.is_empty() && after_close.starts_with("[[/footnote]]"));
+    }
+    after_head == "[[footnote]]" && after_close.starts_with("[[/footnote]]")
+}
+
 fn parse_fn<'r, 't>(
     parser: &mut Parser<'r, 't>,
     name: &str,
@@ -511,6 +540,7 @@ fn parse_fn<'r, 't>(
         && parser
             .wikidot_block_pair_at_head_byte(opener_start)
             .is_none()
+        && !wikidot_collapsible_close_crosses_footnote(parser, opener_start)
         && (parser.discarding_hidden_body()
             || parser.wikidot_scan_shows_stolen_head(
                 WikidotBlockKind::Collapsible,

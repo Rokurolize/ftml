@@ -30,6 +30,8 @@ const LIST_DEPTH_AT_FOOTNOTE_NONE: u32 = u32::MAX;
 
 const FOOTNOTE_BODY_HEAD_NONE: u32 = u32::MAX;
 
+const YIELDED_FOOTNOTE_CLOSER: u16 = 1 << 15;
+
 /// Sentinel for "no row suffix recorded" in the packed field.
 const ROW_SUFFIX_INACTIVE: u32 = u32::MAX;
 
@@ -853,6 +855,18 @@ impl Parser<'_, '_> {
             None => FOOTNOTE_BODY_HEAD_NONE,
             Some(byte) => u32::try_from(byte).unwrap_or(FOOTNOTE_BODY_HEAD_NONE - 1),
         };
+    }
+
+    pub(crate) fn has_yielded_footnote_closer(&self) -> bool {
+        self.wikidot.crossed_closes & YIELDED_FOOTNOTE_CLOSER != 0
+    }
+
+    pub(crate) fn set_yielded_footnote_closer(&mut self, value: bool) {
+        set_flag(
+            &mut self.wikidot.crossed_closes,
+            YIELDED_FOOTNOTE_CLOSER,
+            value,
+        );
     }
 
     pub(crate) fn take_crossed_collapsible_tail(&mut self) -> bool {

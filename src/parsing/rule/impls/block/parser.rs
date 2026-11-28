@@ -5746,7 +5746,7 @@ where
 
     fn wikidot_math_swallows_closer(text: &str, closer_start: usize) -> bool {
         const OPENER: &str = "[[math";
-        let window_start = closer_start.saturating_sub(16384);
+        let window_start = text.ceil_char_boundary(closer_start.saturating_sub(16384));
         let Some(offset) = text[window_start..closer_start].rfind(OPENER) else {
             return false;
         };
@@ -12348,6 +12348,27 @@ mod tests {
         let (_, errors) = crate::parse(&tokenization, &page_info, &settings).into();
 
         assert!(errors.is_empty(), "{errors:?}");
+    }
+
+    #[test]
+    fn wikidot_math_window_start_splits_multibyte_character() {
+        let mut source = String::from("[[div]]\n");
+        source.push_str(&"\u{2014}".repeat(20));
+        source.push_str(&"b".repeat(16340));
+        source.push_str("\n[[/div]]");
+        crate::preprocess_for_layout(&mut source, Layout::Wikidot);
+        let closer_char = source.rfind("[[/div]]").expect("div closer");
+        let closer_start = source[..closer_char].len();
+        assert!(
+            !source.is_char_boundary(closer_start - 16384),
+            "fixture must split a multibyte character at the window edge"
+        );
+        let page_info = PageInfo::dummy();
+        let settings = WikitextSettings::from_mode(WikitextMode::Page, Layout::Wikidot);
+        let tokenization = crate::tokenize(&source);
+        let (tree, _) = crate::parse(&tokenization, &page_info, &settings).into();
+
+        assert!(tree.content_segments().count() > 0);
     }
 
     #[test]

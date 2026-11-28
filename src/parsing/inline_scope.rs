@@ -4708,8 +4708,12 @@ fn lower_root_sequence<'t>(
                 );
             let reopens_paragraph_after_separator = starts_in_inline_scope
                 && output.last().is_some_and(|element| {
-                    matches!(element, Element::HorizontalRule | Element::ClearFloat(_) | Element::Module(_))
-                        || element.is_content_separator()
+                    matches!(
+                        element,
+                        Element::HorizontalRule
+                            | Element::ClearFloat(_)
+                            | Element::Module(_)
+                    ) || element.is_content_separator()
                 });
             let follows_table = matches!(
                 output.last(),

@@ -496,9 +496,10 @@ pub(super) fn bold_body_crosses_flow_block(elements: &Elements<'_>) -> bool {
                 ContainerType::Div | ContainerType::Note | ContainerType::Align(_)
             )
         }
-        Element::Table(_) | Element::Math { .. } | Element::Code(_) | Element::Module(_) => {
-            true
-        }
+        Element::Table(_)
+        | Element::Math { .. }
+        | Element::Code(_)
+        | Element::Module(_) => true,
         Element::Partial(
             PartialElement::WikidotBlockOpen(WikidotBlockShell::Div { .. })
             | PartialElement::WikidotBlockClose(WikidotBlockCloseKind::Div { .. })

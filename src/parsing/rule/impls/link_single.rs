@@ -1287,13 +1287,23 @@ where
                         }
                         return true;
                     }
-                    scan.update(&close);
-                    continue;
+                    if !(span_open
+                        || size_open
+                        || a_open
+                        || in_span
+                        || in_size
+                        || in_anchor)
+                    {
+                        scan.update(&close);
+                        continue;
+                    }
                 }
             }
             Token::RightBracket | Token::RightBlock | Token::RightLink => {
                 if (span_open || size_open || a_open)
-                    && wikidot_tail_closes_open_inline(&scan, span_open, size_open, a_open)
+                    && wikidot_tail_closes_open_inline(
+                        &scan, span_open, size_open, a_open,
+                    )
                 {
                     if !in_span && !in_size && !in_anchor {
                         parser.cache_single_link_label_owner_scan_outcomes(

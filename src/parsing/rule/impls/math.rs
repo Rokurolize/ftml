@@ -272,7 +272,8 @@ where
                 if wikidot_image_block_opens(parser) {
                     suppress_formula = true;
                     parser.mark_wikidot_math_image_occupied();
-                } else if let Some((name, actionable)) = wikidot_math_inline_block_open(parser)
+                } else if let Some((name, actionable)) =
+                    wikidot_math_inline_block_open(parser)
                     && actionable
                 {
                     span_open |= name.eq_ignore_ascii_case("span");

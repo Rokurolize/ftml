@@ -60,7 +60,7 @@ wikidot-normalize = "0.12"
 writeable = "0.6"
 
 [build-dependencies]
-built = { version = "0.8", features = ["chrono"] }
+built = { version = "0.9", features = ["jiff"] }
 
 [dev-dependencies]
 clap = "4"

@@ -221,6 +221,28 @@ where
     Ok(Some(Elements::Single(Element::Text(Cow::Owned(literal)))))
 }
 
+fn wikidot_owner_opener_at(source: &str, start: usize) -> bool {
+    let bytes = source.as_bytes();
+    if !bytes
+        .get(start..start + 2)
+        .is_some_and(|head| head == b"[[")
+    {
+        return false;
+    }
+    let name_start = start + 2;
+    let name_end = bytes[name_start..]
+        .iter()
+        .position(|byte| !(byte.is_ascii_alphanumeric() || *byte == b'_'))
+        .map_or(bytes.len(), |offset| name_start + offset);
+    matches!(
+        source[name_start..name_end]
+            .trim_end_matches('_')
+            .to_ascii_lowercase()
+            .as_str(),
+        "div" | "span" | "footnote"
+    )
+}
+
 fn try_consume_wikidot_unmatched_inline_close_link<'r, 't>(
     parser: &mut Parser<'r, 't>,
 ) -> Result<Option<Elements<'t>>, ParseError>
@@ -254,19 +276,6 @@ where
     ) {
         return Ok(None);
     }
-    if parser
-        .cached_owner_opener_before(source, start, name)
-        .unwrap_or_else(|| line_has_unmatched_wikidot_owner_opener(source, start, name))
-    {
-        return Ok(None);
-    }
-    if (name.eq_ignore_ascii_case("span") && parser.rule().name() == "block-span")
-        || (name.eq_ignore_ascii_case("div") && parser.rule().name() == "block-div")
-        || (name.eq_ignore_ascii_case("footnote")
-            && parser.rule().name() == "block-footnote")
-    {
-        return Ok(None);
-    }
     if !source
         .as_bytes()
         .get(marker_end)
@@ -282,6 +291,22 @@ where
         .is_some_and(|byte| matches!(byte, b' ' | b'\t'))
     {
         label_start += 1;
+    }
+    let owner_opener_before = parser
+        .cached_owner_opener_before(source, start, name)
+        .unwrap_or_else(|| line_has_unmatched_wikidot_owner_opener(source, start, name));
+    if owner_opener_before
+        && !(name.eq_ignore_ascii_case("div")
+            && !wikidot_owner_opener_at(source, label_start))
+    {
+        return Ok(None);
+    }
+    if (name.eq_ignore_ascii_case("span") && parser.rule().name() == "block-span")
+        || (name.eq_ignore_ascii_case("div") && parser.rule().name() == "block-div")
+        || (name.eq_ignore_ascii_case("footnote")
+            && parser.rule().name() == "block-footnote")
+    {
+        return Ok(None);
     }
     let (_, line_end) = parser.unmatched_line_bounds(source, label_start);
     let Some(close) = parser

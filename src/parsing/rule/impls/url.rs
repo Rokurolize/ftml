@@ -708,6 +708,7 @@ fn wikidot_automatic_url_end(
                 bytes[end],
                 0x00..=0x08 | 0x0b..=0x0c | 0x0e..=0x1f | 0x7f
             )
+            || crate::parsing::token::is_url_terminal_backslash(bytes, end)
             || (!bracket_fallback
                 && (source[end..].starts_with("[[")
                     || source[end..].starts_with("]]")

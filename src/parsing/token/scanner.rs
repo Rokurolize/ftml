@@ -514,6 +514,7 @@ fn scan_url_body(bytes: &[u8], start: usize) -> Option<usize> {
         ) || character.is_whitespace()
             || is_discarded_control(bytes[end])
             || matches!(bytes[end], 0x1b | 0x7f)
+            || is_url_terminal_backslash(bytes, end)
             || has(bytes, end, b">@")
             || has(bytes, end, b"@@")
         {
@@ -523,6 +524,10 @@ fn scan_url_body(bytes: &[u8], start: usize) -> Option<usize> {
     }
 
     (end > start).then_some(end)
+}
+
+pub(crate) fn is_url_terminal_backslash(bytes: &[u8], index: usize) -> bool {
+    bytes[index] == b'\\' && index + 1 == bytes.len()
 }
 
 fn char_at(bytes: &[u8], index: usize) -> Option<char> {

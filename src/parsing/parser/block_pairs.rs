@@ -845,7 +845,7 @@ impl<'t> Scanner<'t> {
         let div_marks =
             super::wikidot_state::compute_wikidot_div_stream_marks(tokens, source);
         for (index, token) in tokens.iter().enumerate() {
-            let Some(&(balance_before, _, own_line_closers, _)) =
+            let Some(&(balance_before, _, own_line_closers, _, _)) =
                 div_marks.get(&token.span.start)
             else {
                 continue;
@@ -914,14 +914,19 @@ impl<'t> Scanner<'t> {
             }
         }
         for (index, token) in tokens.iter().enumerate() {
-            let Some(&(balance_before, _, own_line_closers, ends_after_document)) =
-                div_marks.get(&token.span.start)
+            let Some(&(
+                balance_before,
+                _,
+                own_line_closers,
+                _,
+                line_initial_closers_after,
+            )) = div_marks.get(&token.span.start)
             else {
                 continue;
             };
             if balance_before != 0
                 || own_line_closers == 0
-                || ends_after_document.saturating_sub(own_line_closers) <= balance_before
+                || line_initial_closers_after <= balance_before
                 || !scanner.line_prefix_clean(index)
             {
                 continue;

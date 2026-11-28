@@ -158,6 +158,17 @@ fn classify_block(
     if !inline_pairing_splits_at_paired_block(name) {
         return TokenClass::Opaque;
     }
+    if name.eq_ignore_ascii_case("footnote") && empty_footnote_pair_at(tokens, index) {
+        return TokenClass::Opaque;
+    }
+    let unpaired_code = match tokens[index].token {
+        Token::LeftBlock => pairs.pair_at_head_byte(byte).is_none(),
+        Token::LeftBlockEnd => pairs.pair_at_closer_byte(byte).is_none(),
+        _ => false,
+    };
+    if name.eq_ignore_ascii_case("code") && unpaired_code {
+        return TokenClass::Inert;
+    }
     if tokens[index].token == Token::LeftBlock {
         let paired = pairs.pair_at_head_byte(byte).is_some();
         let div_or_collapsible =
@@ -185,6 +196,38 @@ fn classify_block(
         return TokenClass::Opaque;
     }
     TokenClass::Opaque
+}
+
+fn empty_footnote_pair_at(tokens: &[ExtractedToken<'_>], index: usize) -> bool {
+    let head = match tokens[index].token {
+        Token::LeftBlock => Some(index),
+        Token::LeftBlockEnd => index.checked_sub(3),
+        _ => None,
+    };
+    let Some(head) = head else {
+        return false;
+    };
+    let is_footnote = |i: usize| {
+        tokens.get(i).is_some_and(|token| {
+            token.token == Token::Identifier
+                && token.slice.eq_ignore_ascii_case("footnote")
+        })
+    };
+    tokens
+        .get(head)
+        .is_some_and(|token| token.token == Token::LeftBlock)
+        && is_footnote(head + 1)
+        && tokens
+            .get(head + 2)
+            .is_some_and(|token| token.token == Token::RightBlock)
+        && tokens
+            .get(head + 3)
+            .is_some_and(|token| token.token == Token::LeftBlockEnd)
+        && is_footnote(head + 4)
+        && tokens
+            .get(head + 5)
+            .is_some_and(|token| token.token == Token::RightBlock)
+        && (index == head || index == head + 3)
 }
 
 fn classify(

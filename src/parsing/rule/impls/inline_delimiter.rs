@@ -418,6 +418,39 @@ fn lone_vertical_control_body(token: Token, body: &ExtractedToken<'_>) -> bool {
         && matches!(body.slice, "\u{000b}" | "\u{000c}")
 }
 
+fn unicode_space_body_at_anchor_close(
+    token: Token,
+    name: &str,
+    tokens: &[ExtractedToken<'_>],
+    index: usize,
+) -> bool {
+    matches!(
+        token,
+        Token::Bold
+            | Token::Italics
+            | Token::Underline
+            | Token::Superscript
+            | Token::Subscript
+    ) && (name.eq_ignore_ascii_case("a") || name.eq_ignore_ascii_case("anchor"))
+        && index == 1
+        && tokens[0].token == Token::Other
+        && tokens[0].slice == "\u{a0}"
+}
+
+fn newline_only_raw_at_open(token: Token, tokens: &[ExtractedToken<'_>]) -> bool {
+    matches!(
+        token,
+        Token::Bold
+            | Token::Italics
+            | Token::Underline
+            | Token::Superscript
+            | Token::Subscript
+    ) && tokens.len() >= 3
+        && tokens[0].token == Token::Raw
+        && tokens[1].token == Token::LineBreak
+        && tokens[2].token == Token::Raw
+}
+
 #[derive(Debug, Copy, Clone)]
 pub(super) struct TripleRunClose {
     pub open_end: usize,
@@ -509,6 +542,9 @@ pub(super) fn validate_reachable_close(
 ) -> Result<(), ParseError> {
     let opener_start = parser.current().span.start;
     let tokens = parser.remaining();
+    if parser.settings().layout.legacy() && newline_only_raw_at_open(token, tokens) {
+        return Err(parser.make_err(ParseErrorKind::RuleFailed));
+    }
     let scan_start = parser.ahead_token_index();
     // Block ends change the result only when `end_block_fails` can return
     // true in this context. Otherwise they are ordinary tokens, and a proved
@@ -713,7 +749,9 @@ pub(super) fn validate_reachable_close(
                         return Err(parser.make_err(ParseErrorKind::RuleFailed));
                     }
                     open_blocks.truncate(pos);
-                } else if end_block_fails(parser, &name, mode) {
+                } else if end_block_fails(parser, &name, mode)
+                    && !unicode_space_body_at_anchor_close(token, &name, tokens, index)
+                {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }
             }
@@ -735,7 +773,8 @@ pub(super) fn validate_reachable_close(
                 }
                 if index == 1
                     && tokens[0].token == Token::LineBreak
-                    && opener_on_wikidot_center_line(parser, opener_start)
+                    && (opener_on_wikidot_center_line(parser, opener_start)
+                        || parser.in_wikidot_bibliography_body())
                 {
                     return Err(parser.make_err(ParseErrorKind::RuleFailed));
                 }

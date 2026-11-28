@@ -247,6 +247,8 @@ impl LinkLabel<'_> {
 pub enum LinkType {
     Direct,
 
+    Freelink,
+
     Page,
 
     Interwiki,
@@ -260,6 +262,7 @@ impl LinkType {
     pub fn name(self) -> &'static str {
         match self {
             LinkType::Direct => "direct",
+            LinkType::Freelink => "freelink",
             LinkType::Page => "page",
             LinkType::Interwiki => "interwiki",
             LinkType::Anchor => "anchor",
@@ -274,6 +277,8 @@ impl<'a> TryFrom<&'a str> for LinkType {
     fn try_from(value: &'a str) -> Result<LinkType, &'a str> {
         if value == "direct" {
             Ok(LinkType::Direct)
+        } else if value == "freelink" {
+            Ok(LinkType::Freelink)
         } else if value == "page" {
             Ok(LinkType::Page)
         } else if value == "interwiki" {

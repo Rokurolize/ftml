@@ -213,10 +213,17 @@ pub fn render_link(
     let layout = ctx.layout();
     let handle = ctx.handle();
 
-    ctx.add_link(link);
+    if ltype == LinkType::Freelink {
+        ctx.add_freelink(link);
+    } else {
+        ctx.add_link(link);
+    }
 
     let site = ctx.info().site.as_ref().to_string();
-    let normalized_url = normalize_link(link, ctx.handle());
+    let normalized_url = match (ltype, link) {
+        (LinkType::Freelink, LinkLocation::Url(url)) => Cow::Borrowed(url.as_ref()),
+        _ => normalize_link(link, ctx.handle()),
+    };
     let url = match (label, link) {
         (LinkLabel::Url, LinkLocation::Url(_)) if normalized_url.contains('\\') => {
             Cow::Owned(normalized_url.replace('\\', "/"))
@@ -310,6 +317,7 @@ pub fn render_link(
         },
         Layout::Wikijump => {
             let css_class = match link {
+                LinkLocation::Url(_) if ltype == LinkType::Freelink => "wj-link-external",
                 LinkLocation::Url(url) => match classify_href(url) {
                     HrefKind::NoOp | HrefKind::Invalid | HrefKind::Anchor => {
                         "wj-link-anchor"

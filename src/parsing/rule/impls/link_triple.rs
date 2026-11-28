@@ -28,7 +28,7 @@ use crate::parsing::collect::{
 };
 use crate::parsing::{discard_wikidot_controls, trim_cow, trim_wikidot_ascii_cow};
 use crate::tree::{AnchorTarget, LinkLabel, LinkLocation, LinkType};
-use crate::url::is_url;
+use crate::url::{is_freelink_url, is_url};
 use std::borrow::Cow;
 use wikidot_normalize::normalize;
 
@@ -132,7 +132,7 @@ fn try_consume_link<'r, 't>(
     } else {
         &native_url_invalid[..]
     };
-    let (url, last, authored_url_prefix_is_url) = if parser.settings().layout.legacy() {
+    let (url, last, authored) = if parser.settings().layout.legacy() {
         // The URL walk only stops early at `|`, `]]]`, a paragraph
         // break, a valid comment, or a fused segment; the last two need a
         // later `]`. With none of those left, the walk is certain to reach
@@ -144,13 +144,12 @@ fn try_consume_link<'r, 't>(
         }
         let (url, last) =
             collect_comment_elided_keep(parser, &url_close, url_invalid, None, None)?;
-        let authored_url_prefix_is_url =
-            is_url(url.prefix_before_first_comment().trim_start());
-        (
-            discard_wikidot_controls(url.into_cow()),
-            last,
-            authored_url_prefix_is_url,
-        )
+        let prefix = url.prefix_before_first_comment().trim_start();
+        let authored = AuthoredUrlFlags {
+            is_url: is_url(prefix),
+            is_freelink: is_freelink_url(prefix),
+        };
+        (discard_wikidot_controls(url.into_cow()), last, authored)
     } else {
         let (url, last) = collect_text_resolved_fused(
             parser,
@@ -160,7 +159,11 @@ fn try_consume_link<'r, 't>(
             None,
             false,
         )?;
-        let authored = is_url(url.trim_start());
+        let prefix = url.trim_start();
+        let authored = AuthoredUrlFlags {
+            is_url: is_url(prefix),
+            is_freelink: is_freelink_url(prefix),
+        };
         (url, last, authored)
     };
 
@@ -178,7 +181,10 @@ fn try_consume_link<'r, 't>(
             rule,
             Cow::Borrowed(""),
             false,
-            false,
+            AuthoredUrlFlags {
+                is_url: false,
+                is_freelink: false,
+            },
             target,
             source_start,
         );
@@ -209,20 +215,14 @@ fn try_consume_link<'r, 't>(
     }
 
     let result = match last.token {
-        Token::RightLink => build_same(
-            parser,
-            url,
-            leading_space,
-            authored_url_prefix_is_url,
-            target,
-        ),
+        Token::RightLink => build_same(parser, url, leading_space, authored, target),
 
         Token::Pipe => build_separate(
             parser,
             rule,
             url,
             leading_space,
-            authored_url_prefix_is_url,
+            authored,
             target,
             source_start,
         ),
@@ -245,23 +245,50 @@ fn try_consume_link<'r, 't>(
     Ok(success)
 }
 
+#[derive(Copy, Clone)]
+struct AuthoredUrlFlags {
+    is_url: bool,
+    is_freelink: bool,
+}
+
+fn is_freelink_target(
+    url: &str,
+    leading_space: bool,
+    authored: AuthoredUrlFlags,
+) -> bool {
+    !leading_space && authored.is_freelink && is_freelink_url(url)
+}
+
 fn build_same<'r, 't>(
     parser: &mut Parser<'r, 't>,
     url: Cow<'t, str>,
     leading_space: bool,
-    authored_url_prefix_is_url: bool,
+    authored: AuthoredUrlFlags,
     target: Option<AnchorTarget>,
 ) -> ParseResult<'r, 't, Elements<'t>> {
+    let freelink = parser.settings().layout.legacy()
+        && is_freelink_target(&url, leading_space, authored);
     let label = match url.clone() {
-        Cow::Borrowed(url) => Cow::Borrowed(same_link_label(parser, url)),
-        Cow::Owned(url) => Cow::Owned(same_link_label(parser, &url).to_owned()),
+        Cow::Borrowed(url) => Cow::Borrowed(if freelink {
+            url
+        } else {
+            same_link_label(parser, url)
+        }),
+        Cow::Owned(url) => Cow::Owned(if freelink {
+            url.to_owned()
+        } else {
+            same_link_label(parser, &url).to_owned()
+        }),
     };
     let label = if parser.settings().layout.legacy() && url.starts_with('#') {
         Cow::Borrowed("")
     } else {
         label
     };
-    let label = if parser.settings().layout.legacy() && target.is_some() && !is_url(&url)
+    let label = if parser.settings().layout.legacy()
+        && target.is_some()
+        && !is_url(&url)
+        && !freelink
     {
         match strip_category(&url) {
             Some(stripped) => Cow::Owned(stripped.to_owned()),
@@ -271,8 +298,7 @@ fn build_same<'r, 't>(
         label
     };
 
-    let parsed_link =
-        parse_link_location(parser, url, leading_space, authored_url_prefix_is_url);
+    let parsed_link = parse_link_location(parser, url, leading_space, authored);
     let Some((link, ltype)) = parsed_link else {
         return Err(parser.make_err(ParseErrorKind::RuleFailed));
     };
@@ -329,7 +355,7 @@ fn build_separate<'r, 't>(
     rule: Rule,
     url: Cow<'t, str>,
     leading_space: bool,
-    authored_url_prefix_is_url: bool,
+    authored: AuthoredUrlFlags,
     target: Option<AnchorTarget>,
     source_start: usize,
 ) -> ParseResult<'r, 't, Elements<'t>> {
@@ -377,12 +403,7 @@ fn build_separate<'r, 't>(
         trim_cow(label)
     };
 
-    let parsed_link = parse_link_location(
-        parser,
-        url.clone(),
-        leading_space,
-        authored_url_prefix_is_url,
-    );
+    let parsed_link = parse_link_location(parser, url.clone(), leading_space, authored);
     let Some((link, ltype)) = parsed_link else {
         if legacy && (url.contains("###") || url.contains("/##/")) {
             return ok!(Element::Text(Cow::Owned(format!("[[[{url}|{label}]]]"))));
@@ -1021,7 +1042,7 @@ fn parse_link_location<'r, 't>(
     parser: &Parser<'r, 't>,
     mut url: Cow<'t, str>,
     leading_space: bool,
-    authored_url_prefix_is_url: bool,
+    authored: AuthoredUrlFlags,
 ) -> Option<(LinkLocation<'t>, LinkType)> {
     if !parser.settings().layout.legacy() {
         return LinkLocation::parse_with_interwiki(url, parser.settings());
@@ -1060,7 +1081,7 @@ fn parse_link_location<'r, 't>(
         ));
     }
 
-    if leading_space && is_url(&url) && authored_url_prefix_is_url {
+    if leading_space && is_url(&url) && authored.is_url {
         let page = url.replace("://", ":");
         let page = page.trim_end_matches('/');
         return Some((LinkLocation::Page(PageRef::page_only(page)), LinkType::Page));
@@ -1095,17 +1116,18 @@ fn parse_link_location<'r, 't>(
         return Some((LinkLocation::Page(page_ref), LinkType::Page));
     }
 
-    if url.contains('/')
-        && !url.starts_with('/')
-        && (!is_url(&url) || !authored_url_prefix_is_url)
-    {
+    if is_freelink_target(&url, leading_space, authored) {
+        return Some((LinkLocation::Url(url), LinkType::Freelink));
+    }
+
+    if url.contains('/') && !url.starts_with('/') && (!is_url(&url) || !authored.is_url) {
         return Some((
             LinkLocation::Page(triple_page_ref(&replace_page_slashes(&url))),
             LinkType::Page,
         ));
     }
 
-    if is_url(&url) && !authored_url_prefix_is_url {
+    if is_url(&url) && !authored.is_url {
         return Some((LinkLocation::Page(PageRef::page_only(&url)), LinkType::Page));
     }
 

@@ -19,7 +19,8 @@
  */
 
 use super::footnote_first::{
-    remove_first_footnote, starts_footnote, unowned_footnote_first,
+    footnote_closes_on_line, remove_first_footnote, starts_footnote,
+    unowned_footnote_first,
 };
 use super::line_owner::{LineOwner, LostOwnerBlock, try_consume_lost_owner_block};
 use super::prelude::*;
@@ -1247,7 +1248,7 @@ fn try_consume_fn<'r, 't>(
         }
         if leave_indented_whitespace
             && elements.len() > 1
-            && matches!(elements.first(), Some(Element::Text(text)) if text.chars().all(|c| c.is_whitespace()))
+            && matches!(elements.first(), Some(Element::Text(text)) if text.chars().all(|c| c.is_ascii_whitespace()))
             && !matches!(elements.get(1), Some(Element::Text(_)))
         {
             elements.remove(0);
@@ -1264,6 +1265,17 @@ fn try_consume_fn<'r, 't>(
                 paragraph_split = None;
             }
             debug_assert!(removed, "footnote-first classification found no footnote");
+            if removed
+                && !elements.is_empty()
+                && footnote_closes_on_line(
+                    parser.full_text().inner(),
+                    content_start,
+                    physical_line_end,
+                )
+            {
+                consumed_pruned_row = true;
+                continue;
+            }
         }
 
         let stopped_at_footnote_close = wikidot_footnote_close_ahead(parser);

@@ -1,0 +1,39 @@
+{
+    "elements": [
+        {
+            "element": "container",
+            "data": {
+                "type": "blockquote",
+                "attributes": {},
+                "elements": [
+                    {
+                        "element": "container",
+                        "data": {
+                            "type": "paragraph",
+                            "attributes": {},
+                            "elements": [
+                                {
+                                    "element": "footnote",
+                                    "data": 1
+                                },
+                                {
+                                    "element": "text",
+                                    "data": "y"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "footnotes": [
+        [
+            {
+                "element": "text",
+                "data": "x"
+            }
+        ]
+    ],
+    "needs-footnote-block": true
+}

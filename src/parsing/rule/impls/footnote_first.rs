@@ -40,7 +40,7 @@ pub(super) fn remove_first_footnote(elements: &mut Vec<Element<'_>>) -> bool {
     while index < elements.len() {
         let content = match &elements[index] {
             Element::Text(text) | Element::Raw(text)
-                if text.chars().all(char::is_whitespace) =>
+                if text.chars().all(|c| c.is_ascii_whitespace()) =>
             {
                 WikidotContent::Empty
             }
@@ -85,7 +85,7 @@ fn wikidot_content(elements: &[Element<'_>]) -> WikidotContent {
     for element in elements {
         let content = match element {
             Element::Text(text) | Element::Raw(text)
-                if text.chars().all(char::is_whitespace) =>
+                if text.chars().all(|c| c.is_ascii_whitespace()) =>
             {
                 WikidotContent::Empty
             }
@@ -115,7 +115,7 @@ fn prefix_has_authored_syntax(prefix: &str) -> bool {
             .chars()
             .next()
             .expect("cursor remains on a character boundary");
-        if character.is_whitespace() && character != '\u{0085}' {
+        if character.is_ascii_whitespace() {
             cursor += character.len_utf8();
             continue;
         }
@@ -159,6 +159,38 @@ fn find_uncommented_footnote(line: &str) -> Option<usize> {
             .len_utf8();
     }
     None
+}
+
+pub(super) fn footnote_closes_on_line(source: &str, start: usize, end: usize) -> bool {
+    const CLOSE: &[u8] = b"[[/footnote]]";
+
+    let Some(line) = source.get(start..end) else {
+        return false;
+    };
+    let mut cursor = 0;
+    while cursor < line.len() {
+        let rest = &line[cursor..];
+        if let Some(comment) = rest.strip_prefix("[!--") {
+            let Some(close) = comment.find("--]") else {
+                return false;
+            };
+            cursor += 4 + close + 3;
+            continue;
+        }
+        if rest
+            .as_bytes()
+            .get(..CLOSE.len())
+            .is_some_and(|head| head.eq_ignore_ascii_case(CLOSE))
+        {
+            return true;
+        }
+        cursor += rest
+            .chars()
+            .next()
+            .expect("cursor remains on a character boundary")
+            .len_utf8();
+    }
+    false
 }
 
 #[cfg(test)]
